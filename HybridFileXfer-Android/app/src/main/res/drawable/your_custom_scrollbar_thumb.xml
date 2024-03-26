@@ -1,0 +1,6 @@
+<!-- your_custom_scrollbar_thumb.xml -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="#FF0000"/> <!-- 设置滑块颜色 -->
+    <size android:width="8dp" android:height="60dp"/> <!-- 设置滑块大小 -->
+</shape>

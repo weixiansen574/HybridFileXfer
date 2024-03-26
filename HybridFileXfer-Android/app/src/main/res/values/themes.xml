@@ -1,0 +1,19 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.HybirdFileXfer" parent="Theme.AppCompat.DayNight.DarkActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorPrimaryDark">@color/primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="windowActionBar">true</item>
+        <!-- Customize your light theme here. -->
+        <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+    </style>
+    <style name="Theme.HybridFileXfer.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorControlNormal">@color/white</item>
+        <item name="colorPrimaryDark">@color/primary</item>
+        <item name="titleTextColor">@color/white</item>
+        <item name="windowActionBar">true</item>
+    </style>
+    <style name="Theme.HybridFileXfer" parent="Base.Theme.HybirdFileXfer" />
+</resources>

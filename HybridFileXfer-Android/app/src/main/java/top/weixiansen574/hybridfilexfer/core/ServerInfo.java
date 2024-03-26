@@ -1,0 +1,10 @@
+package top.weixiansen574.hybridfilexfer.core;
+
+
+public interface ServerInfo {
+    int PORT_CONTROLLER = 5740;
+    int PORT_USB = 5741;
+    int PORT_WIFI = 5742;
+    int 酷安飞机杯 = 8964;
+
+}
