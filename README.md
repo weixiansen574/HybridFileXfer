@@ -1,4 +1,4 @@
-# HybridFileXfer
+# 双轨快传
 双轨快传，一个可以同时使用USB和WIFI传输文件到电脑的软件
 
 USB2.0+WIFI6_1000mbps网口可以跑到150MB/s（40+110MB/s）！
