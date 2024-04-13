@@ -3,8 +3,6 @@ package top.weixiansen574.hybridfilexfer;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.os.DeadObjectException;
 import android.os.RemoteException;
 import android.view.View;
@@ -16,14 +14,12 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-import top.weixiansen574.async.EventMessage;
 import top.weixiansen574.hybridfilexfer.async.CDParentTask;
 import top.weixiansen574.hybridfilexfer.async.CDTask;
-import top.weixiansen574.hybridfilexfer.async.IIServiceRequestHandler;
 import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 
-public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<ParcelableRemoteFile> implements IIServiceRequestHandler.ErrorHandler {
+public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<ParcelableRemoteFile> {
     protected String currentDir;
     protected List<ParcelableRemoteFile> currentFiles;
     protected ITransferService service;
@@ -69,30 +65,32 @@ public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<Parce
         new CDTask(handler, this, path).execute();
     }
 
-    private static class CDHandler extends CDTask.EventHandle {
+    private static class CDHandler implements CDTask.EventHandle {
 
         private final IIServiceFileSelectAdapter adapter;
 
         public CDHandler(IIServiceFileSelectAdapter adapter) {
-            super(adapter);
             this.adapter = adapter;
         }
 
         @SuppressLint("NotifyDataSetChanged")
         @Override
-        protected void handleEvent(EventMessage message) {
-            switch (message.getWhat()) {
-                case SUCCESS:
-                    adapter.currentFiles = message.getObject(0, List.class);
-                    adapter.currentDir = message.getObject(1, String.class);
-                    adapter.notifyDataSetChanged();
-                    adapter.exitLoadingState();
-                    break;
-                case PERMISSION_DENIED:
-                    adapter.exitLoadingState();
-                    Toast.makeText(adapter.context, "无权访问", Toast.LENGTH_SHORT).show();
-                    break;
-            }
+        public void onSuccess(List<ParcelableRemoteFile> files, String path) {
+            adapter.currentFiles = files;
+            adapter.currentDir = path;
+            adapter.notifyDataSetChanged();
+            adapter.exitLoadingState();
+        }
+
+        @Override
+        public void onPermissionDenied() {
+            adapter.exitLoadingState();
+            Toast.makeText(adapter.context, "无权访问", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onError(Throwable th) {
+            adapter.handleIIServiceExceptions(th);
         }
     }
 
@@ -120,8 +118,8 @@ public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<Parce
         new CDParentTask(handler, this, Utils.replaceBackslashToSlash(currentDir)).execute();
     }
 
-    @Override
-    public void handleRemoteException(RemoteException e) {
+    public void handleIIServiceExceptions(Throwable e) {
+
         if (e instanceof DeadObjectException) {
             new AlertDialog.Builder(context)
                     .setTitle("发生异常")
@@ -134,41 +132,45 @@ public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<Parce
             Toast.makeText(context, e.toString(), Toast.LENGTH_SHORT).show();
         }
     }
-
-    @Override
-    public void handleOtherExceptions(Throwable th) {
-
-    }
-
-    private static class CDParentHandler extends CDParentTask.EventHandler {
+    private static class CDParentHandler implements CDParentTask.EventHandler {
 
         private final IIServiceFileSelectAdapter adapter;
 
         public CDParentHandler(IIServiceFileSelectAdapter adapter) {
-            super(adapter);
             this.adapter = adapter;
+        }
+
+        @Override
+        public void onError(Throwable th) {
+
+        }
+
+        @Override
+        public void onComplete() {
+            adapter.exitLoadingState();
         }
 
         @SuppressLint("NotifyDataSetChanged")
         @Override
-        protected void handleEvent(EventMessage message) {
-            switch (message.getWhat()) {
-                case SUCCESS:
-                    adapter.currentFiles = message.getObject(0, List.class);
-                    adapter.currentDir = message.getObject(1, String.class);
-                    adapter.notifyDataSetChanged();
-                    break;
-                case PERMISSION_DENIED:
-                    Toast.makeText(adapter.context, "无法前往上级文件夹，因为没有权限", Toast.LENGTH_SHORT).show();
-                    break;
-                case PARENT_DIR_NOT_FILES:
-                    Toast.makeText(adapter.context, "上级文件夹无法列出文件数为空，不切换到父目录，不然你会回不来！", Toast.LENGTH_SHORT).show();
-                    break;
-                case THIS_IS_THE_LAST_PAGE:
-                    Toast.makeText(adapter.context, "已经到最后一页了", Toast.LENGTH_SHORT).show();
-                    break;
-            }
-            adapter.exitLoadingState();
+        public void onSuccess(List<ParcelableRemoteFile> files, String parentPath) {
+            adapter.currentFiles = files;
+            adapter.currentDir = parentPath;
+            adapter.notifyDataSetChanged();
+        }
+
+        @Override
+        public void onPermissionDenied() {
+            Toast.makeText(adapter.context, "无法前往上级文件夹，因为没有权限", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onParentDirNotFiles() {
+            Toast.makeText(adapter.context, "上级文件夹无法列出文件数为空，不切换到父目录，不然你会回不来！", Toast.LENGTH_SHORT).show();
+        }
+
+        @Override
+        public void onThisIsTheLastPage() {
+            Toast.makeText(adapter.context, "已经到最后一页了", Toast.LENGTH_SHORT).show();
         }
     }
 

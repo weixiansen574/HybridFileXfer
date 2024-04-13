@@ -11,8 +11,6 @@ public class ParcelableFileTransferEvent extends FileTransferEvent implements Pa
     public ParcelableFileTransferEvent(FileTransferEvent event) {
         super(event.getState(), event.getDevice(), event.getDesc());
     }
-
-
     @Override
     public int describeContents() {
         return 0;

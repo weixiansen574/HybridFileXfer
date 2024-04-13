@@ -24,7 +24,9 @@ import java.util.Set;
 import java.util.concurrent.LinkedBlockingDeque;
 
 import top.weixiansen574.hybridfilexfer.core.FileTransferServer;
+import top.weixiansen574.hybridfilexfer.core.bean.FileTransferEvent;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
+import top.weixiansen574.hybridfilexfer.droidcore.EndCommandFTEvent;
 import top.weixiansen574.hybridfilexfer.droidcore.Error;
 
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableFileTransferEvent;
@@ -115,10 +117,16 @@ public class TransferServiceBinder extends ITransferService.Stub {
 
     @Override
     public ParcelableFileTransferEvent getNextFileTransferEvent() throws RemoteException {
-        getEventsThreads.add(Thread.currentThread());
         try {
-            return new ParcelableFileTransferEvent(fileTransferServer.getNextTransferEvent());
+            FileTransferEvent nextTransferEvent = fileTransferServer.getNextTransferEvent();
+            if (nextTransferEvent instanceof EndCommandFTEvent){
+                System.out.println("停止获取下一个事件");
+                return null;
+            }
+            return new ParcelableFileTransferEvent(nextTransferEvent);
         } catch (InterruptedException e) {
+            e.printStackTrace();
+            System.out.println("发生异常，线程被中断");
             return null;
         }
     }
@@ -129,12 +137,11 @@ public class TransferServiceBinder extends ITransferService.Stub {
     }
     @Override
     public void stopGetNextEvent(){
-        getEventsThreads.forEach(Thread::interrupt);
-        getEventsThreads.clear();
+        fileTransferServer.fileTransferEvents.add(new EndCommandFTEvent());
     }
 
     @Override
-    public List<ParcelableRemoteFile> listLocalFiles(String path) throws RemoteException {
+    public List<ParcelableRemoteFile> listLocalFiles(String path) throws RemoteException{
         List<ParcelableRemoteFile> fileList = new ArrayList<>();
         File dir = new File(path);
         File[] files = dir.listFiles();
@@ -159,7 +166,5 @@ public class TransferServiceBinder extends ITransferService.Stub {
         }
         return new ParcelableRemoteFile(parentFile);
     }
-
-
 
 }

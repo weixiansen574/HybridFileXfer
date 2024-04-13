@@ -22,20 +22,15 @@ public class CDTask extends BackstageTask<CDTask.EventHandle> {
     protected void onStart(EventHandle eventHandler) throws Throwable {
         List<ParcelableRemoteFile> files = adapter.listTargetFiles(path);
         if (files == null) {
-            eventHandler.sendEmptyEventMessage(EventHandle.PERMISSION_DENIED);
-            //Toast.makeText(context, "无权访问", Toast.LENGTH_SHORT).show();
+            eventHandler.onPermissionDenied();
         } else {
             sortFiles(files);
-            eventHandler.sendEventMessage(EventHandle.SUCCESS,files,path);
+            eventHandler.onSuccess(files,path);
         }
     }
 
-    public abstract static class EventHandle extends IIServiceRequestHandler{
-        public static final int SUCCESS = 0;
-        public static final int PERMISSION_DENIED = 1;
-
-        public EventHandle(ErrorHandler errorHandler) {
-            super(errorHandler);
-        }
+    public interface EventHandle extends BaseEventHandler{
+        void onSuccess(List<ParcelableRemoteFile> files,String path);
+        void onPermissionDenied();
     }
 }

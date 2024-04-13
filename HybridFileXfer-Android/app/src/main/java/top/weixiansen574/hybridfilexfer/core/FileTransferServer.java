@@ -40,7 +40,7 @@ public class FileTransferServer implements ServerInfo, TransferThread.OnExceptio
     ReceiveThread usbReceiveThread;
     SendThread wifiSendThread;
     ReceiveThread wifiReceiveThread;
-    BlockingDeque<FileTransferEvent> fileTransferEvents;
+    public final BlockingDeque<FileTransferEvent> fileTransferEvents;
     ServerSocket controllerSocket;
     ServerSocket usbServerSocket;
     ServerSocket wifiServerSocket;

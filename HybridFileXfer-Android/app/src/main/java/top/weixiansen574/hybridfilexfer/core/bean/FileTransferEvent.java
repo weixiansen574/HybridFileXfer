@@ -13,6 +13,9 @@ public class FileTransferEvent implements DevicesInterface {
         this.desc = desc;
     }
 
+    public FileTransferEvent() {
+    }
+
     public int getState() {
         return state;
     }

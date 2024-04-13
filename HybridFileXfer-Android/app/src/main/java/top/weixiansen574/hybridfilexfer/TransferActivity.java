@@ -29,6 +29,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -47,19 +48,20 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     private boolean isRoot;
     private boolean isLeftFocus = true;
     private Context context;
-    private RecyclerView rv_left_files,rv_right_files;
-    private ConstraintLayout shadowLeft,shadowRight;
-    private FrameLayout frameLeft,frameRight;
+    private RecyclerView rv_left_files, rv_right_files;
+    private ConstraintLayout shadowLeft, shadowRight;
+    private FrameLayout frameLeft, frameRight;
     private IIServiceFileSelectAdapter leftRVAdapter;
     private IIServiceFileSelectAdapter rightRVAdapter;
     private Toolbar toolbar;
     private FrameLayout frameLayout;
     private View currentSelectView;
-    private View leftSelectView,rightSelectView;
+    private View leftSelectView, rightSelectView;
 
     private FileTransferEventMonitorThread fileTransferEventMonitorThread;
     private TransferSpeedMeterThread transferSpeedMeterThread;
     private AlertDialog errorDialog;
+    public boolean isDestroy = false;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -71,8 +73,8 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         setSupportActionBar(toolbar);
         Objects.requireNonNull(getSupportActionBar()).setDisplayHomeAsUpEnabled(true);
         frameLayout = findViewById(R.id.frame_tool);
-        leftSelectView = LayoutInflater.from(context).inflate(R.layout.toolbar_select,null);
-        rightSelectView = LayoutInflater.from(context).inflate(R.layout.toolbar_select,null);
+        leftSelectView = LayoutInflater.from(context).inflate(R.layout.toolbar_select, null);
+        rightSelectView = LayoutInflater.from(context).inflate(R.layout.toolbar_select, null);
         frameLeft = findViewById(R.id.frame_left);
         frameRight = findViewById(R.id.frame_right);
         shadowLeft = findViewById(R.id.inner_shadow_left);
@@ -82,13 +84,14 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         frameLeft.removeView(shadowLeft);
 
         Intent intent = getIntent();
-        isRoot = intent.getBooleanExtra("isRoot",false);
+        isRoot = intent.getBooleanExtra("isRoot", false);
 
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rv_left_files.setLayoutManager(linearLayoutManager);
-        linearLayoutManager = new LinearLayoutManager(context);;
+        linearLayoutManager = new LinearLayoutManager(context);
+        ;
         linearLayoutManager.setOrientation(LinearLayoutManager.VERTICAL);
         rv_right_files.setLayoutManager(linearLayoutManager);
 
@@ -99,13 +102,13 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     @Override
     public void onServiceConnected(ComponentName name, IBinder service) {
         ITransferService iTransferService = ITransferService.Stub.asInterface(service);
-        System.out.println("TransferActivity 已连接service，IBinder:"+service+" iTransferService:"+iTransferService);
+        System.out.println("TransferActivity 已连接service，IBinder:" + service + " iTransferService:" + iTransferService);
         OnTouchListener onTouchListenerForLeft = new OnTouchListener(this, true);
         Toolbar localFileSelectToolbar = leftSelectView.findViewById(R.id.toolbar);
         Toolbar remoteFileSelectToolbar = rightSelectView.findViewById(R.id.toolbar);
         OnTouchListener onTouchListenerForRight = new OnTouchListener(this, false);
-        leftRVAdapter = new LocalFileSelectAdapter(this,onTouchListenerForLeft,localFileSelectToolbar,findViewById(R.id.frame_rv_left),rv_left_files,iTransferService);
-        rightRVAdapter = new RemoteFileSelectAdapter(this,onTouchListenerForRight,remoteFileSelectToolbar,findViewById(R.id.frame_rv_right),rv_right_files,iTransferService);
+        leftRVAdapter = new LocalFileSelectAdapter(this, onTouchListenerForLeft, localFileSelectToolbar, findViewById(R.id.frame_rv_left), rv_left_files, iTransferService);
+        rightRVAdapter = new RemoteFileSelectAdapter(this, onTouchListenerForRight, remoteFileSelectToolbar, findViewById(R.id.frame_rv_right), rv_right_files, iTransferService);
         rv_left_files.setOnTouchListener(onTouchListenerForLeft);
         rv_right_files.setOnTouchListener(onTouchListenerForRight);
         leftRVAdapter.setSelectModeListener(isSelectMode -> switchSelectView(isSelectMode ? leftSelectView : null));
@@ -114,10 +117,11 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         rv_right_files.setAdapter(rightRVAdapter);
 
 
-        fileTransferEventMonitorThread = new FileTransferEventMonitorThread(this,iTransferService);
+        fileTransferEventMonitorThread = new FileTransferEventMonitorThread(this, iTransferService);
+        fileTransferEventMonitorThread.setDaemon(true);
         fileTransferEventMonitorThread.setName("TEventMonitor");
         fileTransferEventMonitorThread.start();
-        transferSpeedMeterThread = new TransferSpeedMeterThread(this,iTransferService);
+        transferSpeedMeterThread = new TransferSpeedMeterThread(this, iTransferService);
         transferSpeedMeterThread.setName("TSpeedMeter");
         transferSpeedMeterThread.start();
         findViewById(R.id.speed_info).setOnClickListener(v -> showTransferProgressDialog());
@@ -139,36 +143,36 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         leftRVAdapter.setOnToTransferListener((selectedItems, dir) -> {
             new AlertDialog.Builder(context)
                     .setTitle("确认传输")
-                    .setMessage("是否将选中的 "+ selectedItems.size()+" 个文件传输到电脑目录："+rightRVAdapter.getCurrentDir())
-                    .setPositiveButton("确定", (dialog, which) ->{
+                    .setMessage("是否将选中的 " + selectedItems.size() + " 个文件传输到电脑目录：" + rightRVAdapter.getCurrentDir())
+                    .setPositiveButton("确定", (dialog, which) -> {
                         leftRVAdapter.cancelSelect();
                         showTransferProgressDialog();
                         try {
-                            iTransferService.transferToPc(selectedItems,dir,rightRVAdapter.getCurrentDir());
+                            iTransferService.transferToPc(selectedItems, dir, rightRVAdapter.getCurrentDir());
                         } catch (RemoteException e) {
                             onServerDied();
                         }
                     })
-                    .setNegativeButton("取消", (dialog, which) ->{
+                    .setNegativeButton("取消", (dialog, which) -> {
                     })
                     .show();
         });
         rightRVAdapter.setOnToTransferListener((selectedItems, dir) -> {
             new AlertDialog.Builder(context)
                     .setTitle("确认传输")
-                    .setMessage("是否将选中的 "+ selectedItems.size()+" 个文件传输到手机目录："+leftRVAdapter.getCurrentDir())
-                    .setPositiveButton("确定", (dialog, which) ->{
+                    .setMessage("是否将选中的 " + selectedItems.size() + " 个文件传输到手机目录：" + leftRVAdapter.getCurrentDir())
+                    .setPositiveButton("确定", (dialog, which) -> {
                         rightRVAdapter.cancelSelect();
                         showTransferProgressDialog();
                         TaskManger.start(() -> {
                             try {
-                                iTransferService.transferToMe(selectedItems,dir,leftRVAdapter.getCurrentDir());
+                                iTransferService.transferToMe(selectedItems, dir, leftRVAdapter.getCurrentDir());
                             } catch (RemoteException e) {
                                 onServerDied();
                             }
                         });
                     })
-                    .setNegativeButton("取消", (dialog, which) ->{
+                    .setNegativeButton("取消", (dialog, which) -> {
                     })
                     .show();
         });
@@ -197,9 +201,9 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         }
     }
 
-    public void onServerDied(){
+    public void onServerDied() {
         runOnUiThread(() -> {
-            if (errorDialog == null && !isDestroyed()){
+            if (errorDialog == null && !isDestroyed()) {
                 errorDialog = new AlertDialog.Builder(context)
                         .setTitle("发生异常")
                         .setMessage("服务端已终止（网络连接中断或服务进程被杀），请重新连接！")
@@ -212,7 +216,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
 
     }
 
-    public void switchTo(boolean isLeft){
+    public void switchTo(boolean isLeft) {
         if (isLeft) {
             //切换内阴影
             if (!this.isLeftFocus) {
@@ -232,15 +236,15 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK){
-            if (isLeftFocus){
-                if (leftRVAdapter.isSelectMode()){
+        if (keyCode == KeyEvent.KEYCODE_BACK) {
+            if (isLeftFocus) {
+                if (leftRVAdapter.isSelectMode()) {
                     leftRVAdapter.cancelSelect();
                 } else {
                     leftRVAdapter.cdParent();
                 }
             } else {
-                 if (rightRVAdapter.isSelectMode()){
+                if (rightRVAdapter.isSelectMode()) {
                     rightRVAdapter.cancelSelect();
                 } else {
                     rightRVAdapter.cdParent();
@@ -251,12 +255,12 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         return super.onKeyDown(keyCode, event);
     }
 
-    private void switchSelectView(View selectView){
-        if (currentSelectView != selectView){
-            if (currentSelectView != null){
+    private void switchSelectView(View selectView) {
+        if (currentSelectView != selectView) {
+            if (currentSelectView != null) {
                 frameLayout.removeView(currentSelectView);
             }
-            if (selectView != null){
+            if (selectView != null) {
                 frameLayout.addView(selectView);
             }
             currentSelectView = selectView;
@@ -264,12 +268,12 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     }
 
 
-    private static class OnTouchListener implements View.OnTouchListener{
+    private static class OnTouchListener implements View.OnTouchListener {
 
         private final TransferActivity activity;
         private final boolean isLeft;
 
-        public OnTouchListener(TransferActivity activity, boolean isLeft){
+        public OnTouchListener(TransferActivity activity, boolean isLeft) {
             this.activity = activity;
             this.isLeft = isLeft;
         }
@@ -277,8 +281,8 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         @Override
         @SuppressLint("ClickableViewAccessibility")
         public boolean onTouch(View v, MotionEvent event) {
-            if (event.getAction() == MotionEvent.ACTION_DOWN){
-                System.out.println("切换到:"+ (isLeft ? "左" : "右"));
+            if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                System.out.println("切换到:" + (isLeft ? "左" : "右"));
                 activity.switchTo(isLeft);
             }
             return false;
@@ -287,14 +291,14 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home){
+        if (item.getItemId() == android.R.id.home) {
             finish();
             return true;
-        } else if (item.getItemId() == R.id.refresh){
-            if (leftRVAdapter == null || rightRVAdapter == null){
+        } else if (item.getItemId() == R.id.refresh) {
+            if (leftRVAdapter == null || rightRVAdapter == null) {
                 return true;
             }
-            if (isLeftFocus){
+            if (isLeftFocus) {
                 leftRVAdapter.cd(leftRVAdapter.getCurrentDir());
             } else {
                 rightRVAdapter.cd(rightRVAdapter.getCurrentDir());
@@ -305,7 +309,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.toolbar_menu,menu);
+        getMenuInflater().inflate(R.menu.toolbar_menu, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -313,12 +317,12 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     protected void onDestroy() {
         super.onDestroy();
         unbindService();
-        if (transferSpeedMeterThread != null){
+        if (transferSpeedMeterThread != null) {
             transferSpeedMeterThread.isRun = false;
             transferSpeedMeterThread.interrupt();
         }
 
-        if (fileTransferEventMonitorThread != null){
+        if (fileTransferEventMonitorThread != null) {
             try {
                 fileTransferEventMonitorThread.service.stopGetNextEvent();
             } catch (RemoteException ignored) {
