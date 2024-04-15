@@ -5,9 +5,9 @@ USB2.0+WIFI6_1000mbps网口可以跑到150MB/s（40+110MB/s）！
 
 ## 速度测试
 
-![PixPin_2024-04-15_20-42-19](E:\HybridFileXfer\PixPin_2024-04-15_20-42-19.png)
+![PixPin_2024-04-15_20-42-19](PixPin_2024-04-15_20-42-19.png)
 
-![PixPin_2024-04-15_20-45-49](E:\HybridFileXfer\PixPin_2024-04-15_20-45-49.png)
+![PixPin_2024-04-15_20-45-49](PixPin_2024-04-15_20-45-49.png)
 
 
 
