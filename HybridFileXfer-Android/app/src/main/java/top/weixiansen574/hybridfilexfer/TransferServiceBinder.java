@@ -106,7 +106,9 @@ public class TransferServiceBinder extends ITransferService.Stub {
         try {
             ArrayList<RemoteFile> remoteFiles = fileTransferServer.listClientFiles(path);
             ArrayList<ParcelableRemoteFile> parcelableRemoteFiles = new ArrayList<>();
+            System.out.println("获取到电脑端文件,size:"+remoteFiles.size());
             for (RemoteFile remoteFile : remoteFiles) {
+                System.out.println(remoteFile.getName());
                 parcelableRemoteFiles.add(new ParcelableRemoteFile(remoteFile));
             }
             return parcelableRemoteFiles;

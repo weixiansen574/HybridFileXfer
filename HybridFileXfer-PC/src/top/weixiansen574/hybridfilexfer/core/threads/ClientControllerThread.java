@@ -52,11 +52,11 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
             InetAddress serverWifiAddress;
             try {
                 serverWifiAddress = getServerWifiAddress();
-            } catch (IOException e){
+            } catch (IOException e) {
                 System.out.println("连接手机失败，因为服务端未运行！请在手机上启动服务器并等待连接！");
                 return;
             }
-            if (Arrays.equals(serverWifiAddress.getAddress(),new byte[4])){
+            if (Arrays.equals(serverWifiAddress.getAddress(), new byte[4])) {
                 System.out.println("连接手机失败，因为手机没有连接WIFI！");
                 return;
             }
@@ -65,24 +65,24 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
             Socket usbSocket = new Socket(InetAddress.getLoopbackAddress(), ServerInfo.PORT_USB);//USB-ADB forward的端口是本地127.0.0.1
 
             //接收线程只管接收
-            usbReceiveThread = new ReceiveThread(fileTransferEvents,ReceiveThread.DEVICE_USB,usbSocket.getInputStream());
+            usbReceiveThread = new ReceiveThread(fileTransferEvents, ReceiveThread.DEVICE_USB, usbSocket.getInputStream());
             usbReceiveThread.setName("usbReceive");
             usbReceiveThread.setOnExceptionListener(this);
             usbReceiveThread.start();
-            wifiReceiveThread = new ReceiveThread(fileTransferEvents,ReceiveThread.DEVICE_WIFI,wifiSocket.getInputStream());
+            wifiReceiveThread = new ReceiveThread(fileTransferEvents, ReceiveThread.DEVICE_WIFI, wifiSocket.getInputStream());
             wifiReceiveThread.setName("wifiReceive");
             wifiReceiveThread.setOnExceptionListener(this);
             wifiReceiveThread.start();
 
-            usbSendThread = new SendThread(fileTransferEvents,SendThread.DEVICE_USB,jobPublisher,usbSocket.getOutputStream());
+            usbSendThread = new SendThread(fileTransferEvents, SendThread.DEVICE_USB, jobPublisher, usbSocket.getOutputStream());
             usbSendThread.setName("usbSend");
             usbSendThread.setOnExceptionListener(this);
             usbSendThread.start();
-            wifiSendThread = new SendThread(fileTransferEvents,SendThread.DEVICE_WIFI,jobPublisher,wifiSocket.getOutputStream());
+            wifiSendThread = new SendThread(fileTransferEvents, SendThread.DEVICE_WIFI, jobPublisher, wifiSocket.getOutputStream());
             wifiSendThread.setName("wifiSend");
             wifiSendThread.setOnExceptionListener(this);
             wifiSendThread.start();
-            System.out.println("已连接至手机！WLAN IP:"+serverWifiAddress.getHostAddress());
+            System.out.println("已连接至手机！WLAN IP:" + serverWifiAddress.getHostAddress());
             waitingForRequest();
 
         } catch (IOException | ClassNotFoundException e) {
@@ -101,25 +101,32 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
     }
 
     private void waitingForRequest() throws IOException, ClassNotFoundException {
-        w:while (true) {
+        w:
+        while (true) {
             short identifiers = dis.readShort();
             switch (identifiers) {
                 case ControllerIdentifiers.LIST_FILES:
                     String path = dis.readUTF();
-                    System.out.println("获取文件列表 "+path);
+                    System.out.println("获取文件列表 " + path);
                     handleListFiles(path);
                     break;
                 case ControllerIdentifiers.TRANSPORT_FILES:
                     String serverDir = dis.readUTF();//服务器（手机）路径
                     String dir = dis.readUTF();//客户端（电脑）的路径
-                    int contentLength = dis.readInt();//内容长度（文件列表）
+                    int listSize = dis.readInt();//文件路径列表大小
+                    List<String> toTransferFilePaths = new ArrayList<>(listSize);
+                    for (int i = 0; i < listSize; i++) {
+                        toTransferFilePaths.add(dis.readUTF());
+                    }
+                    //ObjectInputStream可能会出现序列化不一致相关问题，已弃用
+                    /*int contentLength = dis.readInt();//内容长度（文件列表）
                     byte[] bytes = new byte[contentLength];
                     dis.readFully(bytes);
                     ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
                     ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
                     List<String> remoteFiles = (List<String>) objectInputStream.readObject();
-                    inputStream.close();
-                    handleTransferFileToServer(serverDir,dir,remoteFiles);
+                    inputStream.close();*/
+                    handleTransferFileToServer(serverDir, dir, toTransferFilePaths);
                     break;
                 case ControllerIdentifiers.SHUTDOWN:
                     System.out.println("收到关闭指令，准备关闭连接……");
@@ -140,38 +147,53 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
     }
 
     private void handleListFiles(String path) throws IOException {
-
-            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
-            ArrayList<RemoteFile> files = new ArrayList<>();
-            if (!path.equals("/")) {
-                File file = new File(path);
-                File[] list = file.listFiles();
-                if (list != null) {
-                    for (File file1 : list) {
-                        files.add(new RemoteFile(file1));
-                    }
-                }
-            } else {
-                File[] roots = File.listRoots();
-                for (File root : roots) {
-                    files.add(new RemoteFile(root.getPath(),root.getPath(),root.lastModified(),root.length(),root.isDirectory()));
+        ArrayList<RemoteFile> files = new ArrayList<>();
+        if (!path.equals("/")) {
+            File file = new File(path);
+            File[] list = file.listFiles();
+            if (list != null) {
+                for (File file1 : list) {
+                    files.add(new RemoteFile(file1));
                 }
             }
-            objectOutputStream.writeObject(files);
-            objectOutputStream.flush();
-            byte[] bytes = byteArrayOutputStream.toByteArray();
-            dos.writeInt(bytes.length);
-            dos.write(bytes);
+        } else {
+            File[] roots = File.listRoots();
+            //判断是否是Linux的目录结构，Windows的根目录是C:\\，而不是所有盘符，Linux的根目录是“/”没有盘符概念
+            if (roots.length == 1 && roots[0].getAbsolutePath().equals("/")){
+                roots = roots[0].listFiles();
+                if (roots == null){
+                    throw new RuntimeException("无法获取根目录下的文件列表，请检查运行时权限");
+                }
+                for (File root : roots) {
+                    files.add(new RemoteFile(root.getName(), root.getPath(), root.lastModified(), root.length(), root.isDirectory()));
+                }
+            } else {
+                for (File root : roots) {
+                    files.add(new RemoteFile(root.getPath(), root.getPath(), root.lastModified(), root.length(), root.isDirectory()));
+                }
+            }
+        }
+        //已弃用ObjectOutputStream
+        //| name       | path       | lastModified | size    | isDirectory |
+        //| ---------- | ---------- | ------------ | ------- | ----------- |
+        //| String:UTF | String:UTF | long:8b      | long:8b | boolean     |
+        dos.writeInt(files.size());//listSize
+        for (RemoteFile file : files) {
+            dos.writeUTF(file.getName());
+            dos.writeUTF(file.getPath());
+            dos.writeLong(file.getLastModified());
+            dos.writeLong(file.getSize());
+            dos.writeBoolean(file.isDirectory());
+        }
     }
 
-    private void handleTransferFileToServer(String serverDir,String dir,List<String> remoteFiles){
+    private void handleTransferFileToServer(String serverDir, String dir, List<String> remoteFiles) {
         File localDir = new File(dir);
         List<File> transferFiles = new ArrayList<>();
         for (String remoteFile : remoteFiles) {
             transferFiles.add(new File(remoteFile));
         }
-        jobPublisher.addJob(new TransferJob(localDir,serverDir,transferFiles));
+        jobPublisher.addJob(new TransferJob(localDir, serverDir, transferFiles));
     }
 
 

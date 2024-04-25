@@ -117,15 +117,34 @@ public class FileTransferServer implements ServerInfo, TransferThread.OnExceptio
         wifiReceiveThread.setOnExceptionListener(this);
         wifiReceiveThread.start();
 
-
-
-
-
     }
 
     public ArrayList<RemoteFile> listClientFiles(String path) throws IOException {
         dos.writeShort(ControllerIdentifiers.LIST_FILES);
         dos.writeUTF(path);
+        //这里不用json了，导入json库会让服务端jar膨胀250kb，直接用字节流传输
+        int listSize = dis.readInt();
+        ArrayList<RemoteFile> remoteFiles = new ArrayList<>(listSize);
+        //| name       | path       | lastModified | size    | isDirectory |
+        //| ---------- | ---------- | ------------ | ------- | ----------- |
+        //| String:UTF | String:UTF | long:8b      | long:8b | boolean     |
+        for (int i = 0; i < listSize; i++) {
+            RemoteFile remoteFile = new RemoteFile(
+                    dis.readUTF(),//name
+                    dis.readUTF(),//path
+                    dis.readLong(),//lastModified
+                    dis.readLong(),//size
+                    dis.readBoolean()//isDirectory
+            );
+            remoteFiles.add(remoteFile);
+        }
+        return remoteFiles;
+
+        /*
+        因为安卓release版会删减无用代码，导致RemoteFile序列化ID不一致
+        objectInputStream.readObject方法将出现异常，导致电脑端目录显示是空白
+        再就是服务端不支持夸语言，仅限于java
+        已弃用以下代码
 
         int contentLength = dis.readInt();
         byte[] content = new byte[contentLength];
@@ -139,21 +158,26 @@ public class FileTransferServer implements ServerInfo, TransferThread.OnExceptio
             throw new IOException(e);
         } finally {
             byteArrayInputStream.close();
-        }
+        }*/
     }
 
     public void transferToMe(List<String> files, String remoteDir, String localDir) throws IOException {
         dos.writeShort(ControllerIdentifiers.TRANSPORT_FILES);//标识，传输文件到服务端
         dos.writeUTF(localDir);//服务端路径(手机)
         dos.writeUTF(remoteDir);//客户端路径(电脑)
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        dos.writeInt(files.size());//文件数量
+        for (String file : files) {
+            dos.writeUTF(file);//文件路径
+        }
+        //ObjectInputStream可能会出现序列化不一致相关问题，已弃用
+        /*ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
         objectOutputStream.writeObject(files);
         objectOutputStream.flush();
         byte[] bytes = outputStream.toByteArray();
         outputStream.close();
         dos.writeInt(bytes.length);//content length
-        dos.write(bytes);//要传输到服务端的文件列表
+        dos.write(bytes);//要传输到服务端的文件列表*/
     }
 
     public void transferToClient(List<File> files, File localDir, String remoteDir) {

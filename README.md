@@ -37,6 +37,37 @@ Root模式需要安装[Sui模块](https://github.com/RikkaApps/Sui/releases)，�
 
 <img src="IMG_20240326_195758.jpg" alt="IMG_20240326_195758" style="zoom:50%;" />
 
+### adb指定设备
+
+v1.1版本新增，用命令行运行jar或者修改启动脚本，程序会在末尾添加adb参数
+
+```shell
+java -jar HybridFileXfer.jar <adb args...>
+#示例
+adb devices
+#List of devices attached
+#1234abcd	device
+#4321dcba	device
+
+java -jar HybridFileXfer.jar -s 1234abcd 
+#程序附加后
+adb -s 1234abcd forward tcp:5740 tcp:5740
+```
+
+### Linux电脑
+
+v1.1新增对Linux的支持，下载对应的电脑客户端即可，解压后执行
+
+```shell
+java -jar HybridFileXfer.jar
+```
+
+或者双击start.bat
+
+目前仅支持x86 CPU的电脑，虽然Java是夸平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录
+
+~~可以试试termux-adb+Java运行环境两台手机对拷🤣~~
+
 ## 传输
 
 连接成功后，点击传输文件按钮，即可开始选择文件进行传输。
