@@ -19,6 +19,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.FrameLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -27,25 +28,19 @@ import androidx.appcompat.widget.Toolbar;
 import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
-import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Objects;
 
 import rikka.shizuku.Shizuku;
 import top.weixiansen574.async.TaskManger;
-import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableFileTransferEvent;
-import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableTransferredBytesInfo;
 
 public class TransferActivity extends AppCompatActivity implements ServiceConnection {
-    private boolean isRoot;
+    private boolean isRootMode;
     private boolean isLeftFocus = true;
     private Context context;
     private RecyclerView rv_left_files, rv_right_files;
@@ -61,7 +56,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     private FileTransferEventMonitorThread fileTransferEventMonitorThread;
     private TransferSpeedMeterThread transferSpeedMeterThread;
     private AlertDialog errorDialog;
-    public boolean isDestroy = false;
+    private ConfigDB configDB;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -84,7 +79,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         frameLeft.removeView(shadowLeft);
 
         Intent intent = getIntent();
-        isRoot = intent.getBooleanExtra("isRoot", false);
+        isRootMode = intent.getBooleanExtra("isRoot", false);
 
 
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(context);
@@ -96,6 +91,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         rv_right_files.setLayoutManager(linearLayoutManager);
 
         bindService();
+        configDB = new ConfigDB(context);
     }
 
     @SuppressLint("ClickableViewAccessibility")
@@ -185,7 +181,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     }
 
     private void bindService() {
-        if (isRoot) {
+        if (isRootMode) {
             Shizuku.bindUserService(Utils.getUserServiceArgs(context), this);
         } else {
             Intent intent = new Intent(context, TransferServices.class);
@@ -194,7 +190,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
     }
 
     private void unbindService() {
-        if (isRoot) {
+        if (isRootMode) {
             Shizuku.unbindUserService(Utils.getUserServiceArgs(context), this, false);
         } else {
             unbindService(this);
@@ -291,10 +287,11 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
 
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
+        int id = item.getItemId();
+        if (id == android.R.id.home) {
             finish();
             return true;
-        } else if (item.getItemId() == R.id.refresh) {
+        } else if (id == R.id.refresh) {
             if (leftRVAdapter == null || rightRVAdapter == null) {
                 return true;
             }
@@ -303,8 +300,63 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
             } else {
                 rightRVAdapter.cd(rightRVAdapter.getCurrentDir());
             }
+        } else if (id == R.id.bookmark_list) {
+            View dialogView = View.inflate(context,R.layout.dialog_bookmarks,null);
+            RecyclerView recyclerView = dialogView.findViewById(R.id.bookmark_list);
+            LinearLayoutManager layoutManager = new LinearLayoutManager(context);
+            layoutManager.setOrientation(RecyclerView.VERTICAL);
+            recyclerView.setLayoutManager(layoutManager);
+            AlertDialog.Builder builder = new AlertDialog.Builder(context)
+                    .setView(dialogView)
+                    .setPositiveButton("关闭",null);
+            if (isLeftFocus){
+                builder.setTitle("本地文件夹书签");
+                recyclerView.setAdapter(new LocalBookmarkAdapter(context,builder.show(),leftRVAdapter,configDB));
+            } else {
+                builder.setTitle("电脑文件夹书签");
+                recyclerView.setAdapter(new RemoteBookmarkAdapter(context,builder.show(),rightRVAdapter,configDB));
+            }
+
+        } else if (id == R.id.add_bookmark) {
+            AlertDialog.Builder builder = new AlertDialog.Builder(context);
+            if (isLeftFocus) {
+                builder.setTitle("确认添加到本地文件夹书签吗？")
+                        .setMessage(leftRVAdapter.getCurrentDir())
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            addBookmark(false,leftRVAdapter.getCurrentDir());
+                        });
+            } else {
+                builder.setTitle("确认添加到电脑文件夹书签吗？")
+                        .setMessage(rightRVAdapter.getCurrentDir())
+                        .setPositiveButton(R.string.ok, (dialog, which) -> {
+                            addBookmark(true,rightRVAdapter.getCurrentDir());
+                        });
+            }
+            builder.setNegativeButton(R.string.cancel, null);
+            builder.show();
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    private void addBookmark(boolean isRemote,String path) {
+        boolean exists;
+        if (isRemote){
+            exists = configDB.checkRemoteBookmarkExists(path);
+            if (!exists) {
+                configDB.addRemoteBookmark(path);
+            }
+        } else {
+            exists = configDB.checkLocalBookmarkExists(path);
+            if (!exists) {
+                configDB.addLocalBookmark(path);
+            }
+        }
+        if (!exists) {
+            Toast.makeText(this, "已添加至"+(isRemote ? "电脑" : "本地")+"书签列表" ,
+                    Toast.LENGTH_LONG).show();
+        } else {
+            Toast.makeText(this, "书签已存在", Toast.LENGTH_LONG).show();
+        }
     }
 
     @Override

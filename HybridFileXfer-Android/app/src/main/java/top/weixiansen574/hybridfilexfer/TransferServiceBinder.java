@@ -79,7 +79,6 @@ public class TransferServiceBinder extends ITransferService.Stub {
     }
 
     public TransferServiceBinder() {
-        Log.d("TransferService","TransferServiceBinder的构造方法被执行了");
         fileTransferServer = new FileTransferServer();
     }
 

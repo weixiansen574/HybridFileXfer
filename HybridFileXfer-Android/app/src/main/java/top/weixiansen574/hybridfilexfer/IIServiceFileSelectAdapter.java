@@ -12,6 +12,7 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import top.weixiansen574.hybridfilexfer.async.CDParentTask;
@@ -21,7 +22,7 @@ import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 
 public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<ParcelableRemoteFile> {
     protected String currentDir;
-    protected List<ParcelableRemoteFile> currentFiles;
+    protected List<ParcelableRemoteFile> currentFiles = new ArrayList<>();
     protected ITransferService service;
 
     public IIServiceFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, RecyclerView recyclerView, ITransferService service) {

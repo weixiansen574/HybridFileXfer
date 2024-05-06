@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">HybridFileXfer</string>
+    <string name="ok" >@android:string/ok</string>
+    <string name="cancel">@android:string/cancel</string>
 </resources>

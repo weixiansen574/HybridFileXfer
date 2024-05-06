@@ -160,7 +160,7 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="1px"
-        android:background="@color/black" />
+        android:background="#888888" />
 
     <LinearLayout
         android:id="@+id/speed_info"

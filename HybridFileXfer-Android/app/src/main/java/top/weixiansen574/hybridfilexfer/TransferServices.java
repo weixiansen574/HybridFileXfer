@@ -21,8 +21,6 @@ public class TransferServices extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        // TODO: Return the communication channel to the service.
-        Log.d("TransferServices","onBind被调用了，binder:"+binder);
         return binder;
     }
 

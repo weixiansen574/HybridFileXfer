@@ -12,6 +12,14 @@
                 android:id="@+id/refresh"
                 android:icon="@drawable/baseline_refresh_24"
                 android:title="刷新"/>
+            <item
+                android:id="@+id/bookmark_list"
+                android:icon="@drawable/baseline_bookmarks_24"
+                android:title="书签列表"/>
+            <item
+                android:id="@+id/add_bookmark"
+                android:icon="@drawable/baseline_bookmark_add_24"
+                android:title="添加书签"/>
         </menu>
     </item>
 

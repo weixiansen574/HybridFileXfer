@@ -61,7 +61,16 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
                 return;
             }
 
-            Socket wifiSocket = new Socket(serverWifiAddress, ServerInfo.PORT_WIFI);
+            Socket wifiSocket;
+            try {
+                wifiSocket = new Socket(serverWifiAddress, ServerInfo.PORT_WIFI);
+            } catch (IOException e){
+                System.out.println("WIFI通道连接手机失败，尝试连接到IP："
+                        +serverWifiAddress.getHostAddress()+
+                        "，请检查手机是否与电脑处在同一局域网！");
+                return;
+            }
+
             Socket usbSocket = new Socket(InetAddress.getLoopbackAddress(), ServerInfo.PORT_USB);//USB-ADB forward的端口是本地127.0.0.1
 
             //接收线程只管接收
