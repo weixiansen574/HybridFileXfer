@@ -107,7 +107,7 @@ v1.2.0新增书签功能。
 
 | 右上角菜单                                                   | 添加书签                                                     | 书签列表                                                     | 跳转后                                                       |
 | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![](Screenshot_2024-05-07-13-31-36-224_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-34-976_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer](E:\HybridFileXfer\Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-10-779_top.weixiansen574.hybridfilexfer.jpg) |
+| ![](Screenshot_2024-05-07-13-31-36-224_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-34-976_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer](Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-10-779_top.weixiansen574.hybridfilexfer.jpg) |
 
 *演示中的~/Android/data/……目录需要root访问（安卓11以上）*
 
@@ -123,7 +123,13 @@ v1.2.0新增书签功能。
 
 具体请查看源码
 
+# 赞助
 
+赞助将用于[购买2.5G-WIFI6路由器](https://m.tb.cn/h.gcb0Q6flYgnOqrX?tk=ubRnWtrez83)，用于尝试双WIFI加速功能的开发（当然也不需要那个路由器我也会开发此功能，就是受限千兆网口，不知速度是否已提升）
+
+请备注“赞助双轨快传-[你的github ID]”。所有赞助名单都将公布！
+
+![1706328825823](1706328825823.jpg)
 
 # 其他
 
