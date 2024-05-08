@@ -68,7 +68,7 @@ java -jar HybridFileXfer.jar
 
 或者双击start.bat
 
-目前仅支持x86 CPU的电脑，虽然Java是夸平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录
+目前仅支持x86 CPU的电脑，虽然Java是跨平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录
 
 ~~可以试试termux-adb+Java运行环境两台手机对拷🤣~~
 
