@@ -29,6 +29,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -78,6 +79,8 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         rv_right_files = findViewById(R.id.rv_right_files);
         frameLeft.removeView(shadowLeft);
 
+
+
         Intent intent = getIntent();
         isRootMode = intent.getBooleanExtra("isRoot", false);
 
@@ -103,8 +106,12 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
         Toolbar localFileSelectToolbar = leftSelectView.findViewById(R.id.toolbar);
         Toolbar remoteFileSelectToolbar = rightSelectView.findViewById(R.id.toolbar);
         OnTouchListener onTouchListenerForRight = new OnTouchListener(this, false);
-        leftRVAdapter = new LocalFileSelectAdapter(this, onTouchListenerForLeft, localFileSelectToolbar, findViewById(R.id.frame_rv_left), rv_left_files, iTransferService);
-        rightRVAdapter = new RemoteFileSelectAdapter(this, onTouchListenerForRight, remoteFileSelectToolbar, findViewById(R.id.frame_rv_right), rv_right_files, iTransferService);
+        leftRVAdapter = new LocalFileSelectAdapter(this, onTouchListenerForLeft,
+                localFileSelectToolbar, findViewById(R.id.frame_rv_left_root),
+                findViewById(R.id.frame_rv_left), iTransferService);
+        rightRVAdapter = new RemoteFileSelectAdapter(this, onTouchListenerForRight,
+                remoteFileSelectToolbar, findViewById(R.id.frame_rv_right_root),
+                findViewById(R.id.frame_rv_right), iTransferService);
         rv_left_files.setOnTouchListener(onTouchListenerForLeft);
         rv_right_files.setOnTouchListener(onTouchListenerForRight);
         leftRVAdapter.setSelectModeListener(isSelectMode -> switchSelectView(isSelectMode ? leftSelectView : null));
@@ -209,7 +216,6 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
                         }).show();
             }
         });
-
     }
 
     public void switchTo(boolean isLeft) {
@@ -474,6 +480,7 @@ public class TransferActivity extends AppCompatActivity implements ServiceConnec
                     }
                 } catch (RemoteException e) {
                     isRun = false;
+                    e.printStackTrace();
                     activity.onServerDied();
                 }
             }

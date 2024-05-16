@@ -37,35 +37,33 @@
             android:id="@+id/frame_left"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:layout_weight="1">
-
+            android:layout_weight="1"
+            tools:ignore="NestedWeights">
 
             <FrameLayout
-                android:id="@+id/frame_rv_left"
+                android:id="@+id/frame_rv_left_root"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
+                <FrameLayout
+                    android:id="@+id/frame_rv_left"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent">
 
-                <androidx.recyclerview.widget.RecyclerView
+                <com.l4digital.fastscroll.FastScrollRecyclerView
                     android:id="@+id/rv_left_files"
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
-                    app:fastScrollEnabled="true"
-                    app:fastScrollHorizontalThumbDrawable="@drawable/thumb_drawable"
-                    app:fastScrollHorizontalTrackDrawable="@drawable/line_drawable"
-                    app:fastScrollVerticalThumbDrawable="@drawable/thumb_drawable"
-                    app:fastScrollVerticalTrackDrawable="@drawable/line_drawable"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0.0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/view"
-                    app:layout_constraintVertical_bias="1.0" />
+                    app:bubbleColor="#00bb00"
+                    app:bubbleSize="small"
+                    app:bubbleTextColor="#ffffff"
+                    app:handleColor="#999999"/>
+                </FrameLayout>
             </FrameLayout>
 
             <androidx.constraintlayout.widget.ConstraintLayout
                 android:id="@+id/inner_shadow_left"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
                 <View
                     android:id="@+id/view"
@@ -104,19 +102,23 @@
             android:layout_weight="1">
 
             <FrameLayout
-                android:id="@+id/frame_rv_right"
+                android:id="@+id/frame_rv_right_root"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent">
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rv_right_files"
+                <FrameLayout
+                    android:id="@+id/frame_rv_right"
                     android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    app:fastScrollEnabled="true"
-                    app:fastScrollHorizontalThumbDrawable="@drawable/thumb_drawable"
-                    app:fastScrollHorizontalTrackDrawable="@drawable/line_drawable"
-                    app:fastScrollVerticalThumbDrawable="@drawable/thumb_drawable"
-                    app:fastScrollVerticalTrackDrawable="@drawable/line_drawable" />
+                    android:layout_height="match_parent">
+
+                    <com.l4digital.fastscroll.FastScrollRecyclerView
+                        android:id="@+id/rv_right_files"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        app:bubbleColor="#00bb00"
+                        app:bubbleSize="small"
+                        app:bubbleTextColor="#ffffff"
+                        app:handleColor="#999999"/>
+                </FrameLayout>
             </FrameLayout>
 
 
@@ -167,7 +169,8 @@
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:background="#f0f0f0"
-        android:foreground="?android:attr/selectableItemBackground">
+        android:foreground="?android:attr/selectableItemBackground"
+        android:baselineAligned="false">
 
         <LinearLayout
             android:layout_width="0dp"

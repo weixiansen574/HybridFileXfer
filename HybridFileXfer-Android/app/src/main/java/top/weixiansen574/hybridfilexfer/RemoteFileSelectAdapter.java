@@ -9,14 +9,15 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 
 public class RemoteFileSelectAdapter extends IIServiceFileSelectAdapter{
-    public RemoteFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, RecyclerView recyclerView, ITransferService service) {
-        super(context, onTouchListener, fileSelectToolbar, frameLayout, recyclerView, service);
+    public RemoteFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, View listInView, ITransferService service) {
+        super(context, onTouchListener, fileSelectToolbar, frameLayout, listInView, service);
         currentDir = "/";
         cd(currentDir);
 
@@ -24,7 +25,12 @@ public class RemoteFileSelectAdapter extends IIServiceFileSelectAdapter{
 
     @Override
     public List<ParcelableRemoteFile> listTargetFiles(String path) throws RemoteException {
-        return service.listClientFiles(path);
+        ArrayList<ParcelableRemoteFile> files = new ArrayList<>();
+        int size = service.listClientFiles(path);
+        for (int i = 0; i < size; i++) {
+            files.addAll(service.pollRemoteFiles());
+        }
+        return files;
     }
 
 }

@@ -12,6 +12,8 @@ import android.widget.Toast;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.l4digital.fastscroll.FastScroller;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,13 +22,13 @@ import top.weixiansen574.hybridfilexfer.async.CDTask;
 import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 
-public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<ParcelableRemoteFile> {
+public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<ParcelableRemoteFile> implements FastScroller.SectionIndexer {
     protected String currentDir;
     protected List<ParcelableRemoteFile> currentFiles = new ArrayList<>();
     protected ITransferService service;
 
-    public IIServiceFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, RecyclerView recyclerView, ITransferService service) {
-        super(context, onTouchListener, fileSelectToolbar, frameLayout, recyclerView);
+    public IIServiceFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, View listInView, ITransferService service) {
+        super(context, onTouchListener, fileSelectToolbar, frameLayout, listInView);
         this.service = service;
     }
 
@@ -120,11 +122,11 @@ public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<Parce
     }
 
     public void handleIIServiceExceptions(Throwable e) {
-
+        e.printStackTrace();
         if (e instanceof DeadObjectException) {
             new AlertDialog.Builder(context)
                     .setTitle("发生异常")
-                    .setMessage("服务端已终止（网络连接中断或服务进程被杀），请重新连接！")
+                    .setMessage(e.getMessage())
                     .setCancelable(false)
                     .setPositiveButton("确定", (dialog, which) -> {
                         context.finish();
@@ -181,5 +183,8 @@ public abstract class IIServiceFileSelectAdapter extends FileSelectAdapter<Parce
         return currentFiles.size();
     }
 
-
+    @Override
+    public CharSequence getSectionText(int position) {
+        return String.valueOf(getItem(position).getName().charAt(0));
+    }
 }

@@ -34,11 +34,9 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
     JobPublisher jobPublisher;
     SendThread usbSendThread;
     SendThread wifiSendThread;
-    BlockingDeque<FileTransferEvent> fileTransferEvents;
 
     public ClientControllerThread() {
         jobPublisher = new JobPublisher();
-        fileTransferEvents = new LinkedBlockingDeque<>();
     }
 
     @Override
@@ -61,24 +59,33 @@ public class ClientControllerThread extends Thread implements TransferThread.OnE
                 return;
             }
 
-            Socket wifiSocket = new Socket(serverWifiAddress, ServerInfo.PORT_WIFI);
+            Socket wifiSocket;
+            try {
+                wifiSocket = new Socket(serverWifiAddress, ServerInfo.PORT_WIFI);
+            } catch (IOException e){
+                System.out.println("WIFI通道连接手机失败，尝试连接到IP："
+                        +serverWifiAddress.getHostAddress()+
+                        "，请检查手机是否与电脑处在同一局域网！");
+                return;
+            }
+
             Socket usbSocket = new Socket(InetAddress.getLoopbackAddress(), ServerInfo.PORT_USB);//USB-ADB forward的端口是本地127.0.0.1
 
             //接收线程只管接收
-            usbReceiveThread = new ReceiveThread(fileTransferEvents, ReceiveThread.DEVICE_USB, usbSocket.getInputStream());
+            usbReceiveThread = new ReceiveThread(null, ReceiveThread.DEVICE_USB, usbSocket.getInputStream());
             usbReceiveThread.setName("usbReceive");
             usbReceiveThread.setOnExceptionListener(this);
             usbReceiveThread.start();
-            wifiReceiveThread = new ReceiveThread(fileTransferEvents, ReceiveThread.DEVICE_WIFI, wifiSocket.getInputStream());
+            wifiReceiveThread = new ReceiveThread(null, ReceiveThread.DEVICE_WIFI, wifiSocket.getInputStream());
             wifiReceiveThread.setName("wifiReceive");
             wifiReceiveThread.setOnExceptionListener(this);
             wifiReceiveThread.start();
 
-            usbSendThread = new SendThread(fileTransferEvents, SendThread.DEVICE_USB, jobPublisher, usbSocket.getOutputStream());
+            usbSendThread = new SendThread(null, SendThread.DEVICE_USB, jobPublisher, usbSocket.getOutputStream());
             usbSendThread.setName("usbSend");
             usbSendThread.setOnExceptionListener(this);
             usbSendThread.start();
-            wifiSendThread = new SendThread(fileTransferEvents, SendThread.DEVICE_WIFI, jobPublisher, wifiSocket.getOutputStream());
+            wifiSendThread = new SendThread(null, SendThread.DEVICE_WIFI, jobPublisher, wifiSocket.getOutputStream());
             wifiSendThread.setName("wifiSend");
             wifiSendThread.setOnExceptionListener(this);
             wifiSendThread.start();

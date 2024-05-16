@@ -11,14 +11,15 @@ import android.widget.FrameLayout;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 
 import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
 
 public class LocalFileSelectAdapter extends IIServiceFileSelectAdapter{
-    public LocalFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, RecyclerView recyclerView, ITransferService service) {
-        super(context, onTouchListener, fileSelectToolbar, frameLayout, recyclerView, service);
+    public LocalFileSelectAdapter(Activity context, View.OnTouchListener onTouchListener, Toolbar fileSelectToolbar, FrameLayout frameLayout, View listInView, ITransferService service) {
+        super(context, onTouchListener, fileSelectToolbar, frameLayout, listInView, service);
         currentDir = "/storage/emulated/0/";
 
         cd(currentDir);
@@ -26,6 +27,11 @@ public class LocalFileSelectAdapter extends IIServiceFileSelectAdapter{
 
     @Override
     public List<ParcelableRemoteFile> listTargetFiles(String path) throws RemoteException {
-        return service.listLocalFiles(path);
+        ArrayList<ParcelableRemoteFile> files = new ArrayList<>();
+        int size = service.listLocalFiles(path);
+        for (int i = 0; i < size; i++) {
+            files.addAll(service.pollLocalFiles());
+        }
+        return files;
     }
 }

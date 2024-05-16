@@ -55,7 +55,6 @@ public class ReceiveThread extends TransferThread {
                         transferredBytes += read;
                     }
                     fileOutputStream.close();
-                    addEvent(FileTransferEvent.STATE_OVER,desc);
                     file.setLastModified(lastModified);//文件传输完成后将修改日期设置成与手机内一致的
                     System.out.println("{"+Thread.currentThread().getName()+"}"+desc);
                 } else if (identifier == TransferIdentifiers.FOLDER){
@@ -66,7 +65,6 @@ public class ReceiveThread extends TransferThread {
                         file.mkdirs();
                     }
                     file.setLastModified(lastModified);
-                    addEvent(FileTransferEvent.STATE_OVER,filePath);
                     System.out.println(filePath);
                 } else if (identifier == TransferIdentifiers.FILE_SLICE){
                     String filePath = dis.readUTF();//文件路径

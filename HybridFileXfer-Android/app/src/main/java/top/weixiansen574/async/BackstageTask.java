@@ -26,6 +26,7 @@ public abstract class BackstageTask<T extends BackstageTask.BaseEventHandler> im
             onStart(proxyInstance);
             TaskManger.postOnUiThread(uiHandler::onComplete);
         } catch (Throwable e) {
+            e.printStackTrace();
             TaskManger.postOnUiThread(() -> uiHandler.onError(e));
         }
     }

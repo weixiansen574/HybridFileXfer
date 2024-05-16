@@ -1,27 +1,14 @@
 package top.weixiansen574.hybridfilexfer;
 
-import android.app.Instrumentation;
-import android.hardware.input.InputManager;
 import android.os.RemoteException;
-import android.os.SystemClock;
 import android.util.Log;
-import android.view.InputDevice;
-import android.view.InputEvent;
-import android.view.KeyEvent;
-import android.view.MotionEvent;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.net.BindException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
-import java.util.concurrent.LinkedBlockingDeque;
 
 import top.weixiansen574.hybridfilexfer.core.FileTransferServer;
 import top.weixiansen574.hybridfilexfer.core.bean.FileTransferEvent;
@@ -35,8 +22,10 @@ import top.weixiansen574.hybridfilexfer.droidcore.ParcelableTransferredBytesInfo
 
 public class TransferServiceBinder extends ITransferService.Stub {
     public static final String TAG = "TransferServiceBinder";
-    HashSet<Thread> getEventsThreads = new HashSet<>();
     FileTransferServer fileTransferServer;
+    public LinkedList<ArrayList<ParcelableRemoteFile>> localFileQueue;
+    public LinkedList<ArrayList<ParcelableRemoteFile>> remoteFileQueue;
+    public static final int SLICE_SIZE = 1000;
 
 
     @Override
@@ -100,20 +89,36 @@ public class TransferServiceBinder extends ITransferService.Stub {
     }
 
     @Override
-    public ArrayList<ParcelableRemoteFile> listClientFiles(String path) throws RemoteException {
-        Log.d("TransferService",this.toString());
+    public int listClientFiles(String path) throws RemoteException {
         try {
             ArrayList<RemoteFile> remoteFiles = fileTransferServer.listClientFiles(path);
-            ArrayList<ParcelableRemoteFile> parcelableRemoteFiles = new ArrayList<>();
-            System.out.println("获取到电脑端文件,size:"+remoteFiles.size());
+
+            int count = 0;
+            remoteFileQueue = new LinkedList<>();
+            ArrayList<ParcelableRemoteFile> fileArraySlice = new ArrayList<>();
+
             for (RemoteFile remoteFile : remoteFiles) {
-                System.out.println(remoteFile.getName());
-                parcelableRemoteFiles.add(new ParcelableRemoteFile(remoteFile));
+                count++;
+                fileArraySlice.add(new ParcelableRemoteFile(remoteFile));
+                if (count >= SLICE_SIZE){
+                    remoteFileQueue.add(fileArraySlice);
+                    fileArraySlice = new ArrayList<>();
+                    count=0;
+                }
             }
-            return parcelableRemoteFiles;
+            remoteFileQueue.add(fileArraySlice);
+            return remoteFileQueue.size();
         } catch (IOException e) {
             throw new RemoteException(e.toString());
         }
+    }
+
+    @Override
+    public ArrayList<ParcelableRemoteFile> pollRemoteFiles() throws RemoteException {
+        if (remoteFileQueue == null){
+            return null;
+        }
+        return remoteFileQueue.poll();
     }
 
     @Override
@@ -142,18 +147,35 @@ public class TransferServiceBinder extends ITransferService.Stub {
     }
 
     @Override
-    public List<ParcelableRemoteFile> listLocalFiles(String path) throws RemoteException{
-        List<ParcelableRemoteFile> fileList = new ArrayList<>();
+    public int listLocalFiles(String path) throws RemoteException{
         File dir = new File(path);
         File[] files = dir.listFiles();
         if (files == null){
+            return -1;
+        }
+        int count = 0;
+        localFileQueue = new LinkedList<>();
+        ArrayList<ParcelableRemoteFile> fileArraySlice = new ArrayList<>();
+        for (File file : files) {
+            count++;
+            ParcelableRemoteFile parcelableRemoteFile = new ParcelableRemoteFile(file);
+            fileArraySlice.add(parcelableRemoteFile);
+            if (count >= SLICE_SIZE){
+                localFileQueue.add(fileArraySlice);
+                fileArraySlice = new ArrayList<>();
+                count=0;
+            }
+        }
+        localFileQueue.add(fileArraySlice);
+        return localFileQueue.size();
+    }
+
+    @Override
+    public List<ParcelableRemoteFile> pollLocalFiles() throws RemoteException {
+        if (localFileQueue == null){
             return null;
         }
-        for (File file : files) {
-            ParcelableRemoteFile parcelableRemoteFile = new ParcelableRemoteFile(file);
-            fileList.add(parcelableRemoteFile);
-        }
-        return fileList;
+        return localFileQueue.poll();
     }
 
     @Override

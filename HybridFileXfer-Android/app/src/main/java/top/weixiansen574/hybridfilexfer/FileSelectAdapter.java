@@ -2,7 +2,6 @@ package top.weixiansen574.hybridfilexfer;
 
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import android.content.Context;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,15 +27,15 @@ public abstract class FileSelectAdapter<T> extends RecyclerView.Adapter<FileSele
     protected Activity context;
     private int lastSelectedCount = 0;
     private final FrameLayout frameLayout;
-    private final RecyclerView recyclerView;
+    private final View listInView;
     private final View loadingView;
 
-    public FileSelectAdapter(Activity context, View.OnTouchListener onTouchListener,Toolbar fileSelectToolbar,FrameLayout frameLayout,RecyclerView recyclerView){
+    public FileSelectAdapter(Activity context, View.OnTouchListener onTouchListener,Toolbar fileSelectToolbar,FrameLayout frameLayout,View listInView){
         this.fileSelectToolbar = fileSelectToolbar;
         this.context = context;
         this.onTouchListener = onTouchListener;
         this.frameLayout = frameLayout;
-        this.recyclerView = recyclerView;
+        this.listInView = listInView;
 
         selectedItems = new HashSet<>();
         loadingView = View.inflate(context,R.layout.loading_files,null);
@@ -119,6 +118,7 @@ public abstract class FileSelectAdapter<T> extends RecyclerView.Adapter<FileSele
                 cd(getPath(item));
             }
         });
+
     }
 
 
@@ -191,6 +191,7 @@ public abstract class FileSelectAdapter<T> extends RecyclerView.Adapter<FileSele
     }
 
 
+
     public static class ViewHolder extends RecyclerView.ViewHolder {
         ImageView fileIcon;
         TextView fileName,dateTime,fileSize;
@@ -214,12 +215,12 @@ public abstract class FileSelectAdapter<T> extends RecyclerView.Adapter<FileSele
     }
 
     public void enterLoadingState(){
-        frameLayout.removeView(recyclerView);
+        frameLayout.removeView(listInView);
         frameLayout.addView(loadingView);
     }
 
     public void exitLoadingState(){
         frameLayout.removeView(loadingView);
-        frameLayout.addView(recyclerView);
+        frameLayout.addView(listInView);
     }
 }
