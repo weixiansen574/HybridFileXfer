@@ -23,7 +23,9 @@ public abstract class TransferThread extends Thread implements DevicesInterface 
     }
 
     protected void addEvent(int state, String desc){
-        events.add(new FileTransferEvent(state,device,desc));
+        if(events != null) {
+            events.add(new FileTransferEvent(state, device, desc));
+        }
     }
 
     public void setOnExceptionListener(OnExceptionListener onExceptionListener) {
