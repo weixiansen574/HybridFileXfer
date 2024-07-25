@@ -62,7 +62,7 @@ public class ReceiveThread extends TransferThread {
                     long lastModified = dis.readLong();//修改时间
                     File file = new File(filePath);
                     if (!file.exists()){
-                        file.mkdirs();
+                        file.mkdirs(); // 这里好像没用 并不会创建Windows的文件夹？
                     }
                     file.setLastModified(lastModified);
                     System.out.println(filePath);
@@ -134,12 +134,23 @@ public class ReceiveThread extends TransferThread {
         }
     }
 
+    // 不能只替换最后一个路径名
     public static String replaceWindowsInvalidChars(String filePath) {
-        // 找到最后一个反斜杠的位置
-        int lastIndex = filePath.lastIndexOf('/');
-        // 提取从最后一个反斜杠之后的字符串
-        String temp = filePath.substring(lastIndex + 1);
-        temp = temp.replaceAll("[:*?\"<>|]", "...");//替换在Windows中不被允许的字符
-        return filePath.substring(0, lastIndex + 1) + temp;
+        // 找到第一个斜杠的位置
+        int firstSlashIndex = filePath.indexOf('/');
+        if (firstSlashIndex == -1) {
+            // 如果没有找到斜杠，返回原始文件路径
+            return filePath;
+        }
+
+        // 提取第一个斜杠之前和之后的部分
+        String beforeFirstSlash = filePath.substring(0, firstSlashIndex + 1);
+        String afterFirstSlash = filePath.substring(firstSlashIndex + 1);
+
+        // 使用正则表达式删除问号和冒号
+        afterFirstSlash = afterFirstSlash.replaceAll("[:*?\"<>|]", "...");// 替换在Windows中不被允许的字符
+
+        // 重新组合路径
+        return beforeFirstSlash + afterFirstSlash;
     }
 }
