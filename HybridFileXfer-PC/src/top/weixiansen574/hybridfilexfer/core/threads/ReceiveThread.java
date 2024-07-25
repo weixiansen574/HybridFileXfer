@@ -29,6 +29,7 @@ public class ReceiveThread extends TransferThread {
             while ((identifier = dis.readShort()) != TransferIdentifiers.END_POINT) {
                 if (identifier == TransferIdentifiers.FILE){
                     String filePath = dis.readUTF();//文件路径
+                    filePath = filePath.replaceAll("[\\\\/:*?\"<>|]", "..");//替换在Windows中不被允许的字符
                     long lastModified = dis.readLong();//修改时间
                     long remainingLength = dis.readLong();//文件大小
                     String desc = String.format(Locale.getDefault(),"[%.2fMB] %s",
