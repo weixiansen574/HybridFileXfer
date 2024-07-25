@@ -1,13 +1,11 @@
 package top.weixiansen574.hybridfilexfer.core.threads;
 
 import java.io.DataInputStream;
-import java.io.EOFException;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.RandomAccessFile;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.concurrent.BlockingDeque;
 
@@ -29,7 +27,8 @@ public class ReceiveThread extends TransferThread {
             while ((identifier = dis.readShort()) != TransferIdentifiers.END_POINT) {
                 if (identifier == TransferIdentifiers.FILE){
                     String filePath = dis.readUTF();//文件路径
-                    filePath = filePath.replaceAll("[\\\\/:*?\"<>|]", "..");//替换在Windows中不被允许的字符
+                    filePath = replaceWindowsInvalidChars(filePath);
+
                     long lastModified = dis.readLong();//修改时间
                     long remainingLength = dis.readLong();//文件大小
                     String desc = String.format(Locale.getDefault(),"[%.2fMB] %s",
@@ -133,5 +132,14 @@ public class ReceiveThread extends TransferThread {
             dis.close();
         } catch (IOException ignored) {
         }
+    }
+
+    public static String replaceWindowsInvalidChars(String filePath) {
+        // 找到最后一个反斜杠的位置
+        int lastIndex = filePath.lastIndexOf('/');
+        // 提取从最后一个反斜杠之后的字符串
+        String temp = filePath.substring(lastIndex + 1);
+        temp = temp.replaceAll("[:*?\"<>|]", "...");//替换在Windows中不被允许的字符
+        return filePath.substring(0, lastIndex + 1) + temp;
     }
 }
