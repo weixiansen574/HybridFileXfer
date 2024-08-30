@@ -34,28 +34,42 @@ public class ReceiveThread extends TransferThread {
                     String desc = String.format(Locale.getDefault(),"[%.2fMB] %s",
                             ((float) remainingLength) / 1024 / 1024,
                             filePath);
-                    addEvent(FileTransferEvent.STATE_DOWNLOAD,desc);
+                    addEvent(FileTransferEvent.STATE_DOWNLOAD,desc); // 双端阻塞队列 好像跟线程并发有关，没完全明白
+
+                    boolean existSame = checkFileSize(filePath, remainingLength);
+
+
                     File file = new File(filePath);
                     File parentFile = file.getParentFile();
-                    if (parentFile != null && !file.getParentFile().exists()){
+                    if (parentFile != null && !file.getParentFile().exists()) {
                         parentFile.mkdirs();
                     }
-                    FileOutputStream fileOutputStream = new FileOutputStream(file);
+
+                    FileOutputStream fileOutputStream = null; // 可能尚未初始化变量fileOutputStream
+                    if (existSame == false) fileOutputStream = new FileOutputStream(file); // 这里不能运行，否则会把文件置空
                     byte[] buffer = new byte[4096];
-                    while (remainingLength > 0){
+                    while (remainingLength > 0) {
                         int read;
-                        if (remainingLength >= buffer.length){
-                            read = dis.read(buffer);
+                        if (remainingLength >= buffer.length) {
+                            read = dis.read(buffer); // 懂了 不能直接跳过这里的read，不然identifier = dis.readShort()会不对
                         } else {
                             int len = (int) remainingLength;
-                            read = dis.read(buffer,0,len);
+                            read = dis.read(buffer, 0, len);
                         }
                         remainingLength -= read;
-                        fileOutputStream.write(buffer,0,read);
+                        if (existSame == false) fileOutputStream.write(buffer, 0, read);
                         transferredBytes += read;
                     }
-                    fileOutputStream.close();
-                    file.setLastModified(lastModified);//文件传输完成后将修改日期设置成与手机内一致的
+                    if (existSame == false) fileOutputStream.close();
+                    if (existSame == false) {
+                        file.setLastModified(lastModified);//文件传输完成后将修改日期设置成与手机内一致的
+                    } else{
+                        System.out.print("跳过该文件：");
+                    }
+
+
+
+
                     System.out.println("{"+Thread.currentThread().getName()+"}"+desc);
                 } else if (identifier == TransferIdentifiers.FOLDER){
                     String filePath = dis.readUTF();//文件路径
@@ -78,15 +92,27 @@ public class ReceiveThread extends TransferThread {
                             totalSize/ 1024 / 1024,
                             filePath);
                     addEvent(FileTransferEvent.STATE_DOWNLOAD,desc);
+
+
+                    boolean existSame = checkFileSize(filePath, totalSize);
+
                     File file = new File(filePath);
                     File parentFile = file.getParentFile();
                     if (parentFile != null && !file.getParentFile().exists()){
                         parentFile.mkdirs();
                     }
-                    RandomAccessFile randomAccessFile = newRAF(file, totalSize);
-                    randomAccessFile.seek(startRange);
+
+                    RandomAccessFile randomAccessFile = null;
+                    if (existSame == false) {
+                        randomAccessFile = newRAF(file, totalSize);
+                        randomAccessFile.seek(startRange);
+                    } else{
+                        System.out.print("跳过该文件片段：");
+                    }
+
                     int downloadLength = (int) (endRange - startRange);
                     System.out.println("{"+Thread.currentThread().getName()+"}"+desc);
+
                     byte[] buffer = new byte[4096];
                     boolean canContinue = true;
                     while (canContinue) {
@@ -99,10 +125,10 @@ public class ReceiveThread extends TransferThread {
                             canContinue = false;
                         }
                         dis.readFully(buffer, 0, len);
-                        randomAccessFile.write(buffer, 0, len);
+                        if (existSame == false) randomAccessFile.write(buffer, 0, len);
                         transferredBytes += len;
                     }
-                    randomAccessFile.close();
+                    if (existSame == false) randomAccessFile.close();
                     file.setLastModified(lastModified);
                     addEvent(FileTransferEvent.STATE_OVER,desc);
                 }
@@ -152,5 +178,18 @@ public class ReceiveThread extends TransferThread {
 
         // 重新组合路径
         return beforeFirstSlash + afterFirstSlash;
+    }
+
+    public static boolean checkFileSize(String filePath, long expectedSize) {
+        File file = new File(filePath);
+
+        // 检查文件是否存在
+        if (file.exists() && file.isFile()) {
+            // 检查文件大小是否相同
+            return file.length() == expectedSize;
+        }
+
+        // 文件不存在或不是一个文件
+        return false;
     }
 }
