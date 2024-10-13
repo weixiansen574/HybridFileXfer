@@ -3,9 +3,6 @@ package top.weixiansen574.async;
 import android.os.Handler;
 import android.os.Looper;
 
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class TaskManger {
     private static volatile Handler mainThreadHandler;
     private static Handler getUiThreadHandler() {
@@ -19,14 +16,13 @@ public class TaskManger {
         return mainThreadHandler;
     }
 
-
-
     public static void postOnUiThread(Runnable runnable) {
         getUiThreadHandler().post(runnable);
     }
-    private static final ExecutorService executorService = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
     public static void start(Runnable runnable){
-        executorService.execute(runnable);
+        Thread thread = new Thread(runnable);
+        thread.setName(runnable.getClass().getSimpleName());
+        thread.start();
     }
     public static void execute(BackstageTask<?> backstageTask){
         start(backstageTask);

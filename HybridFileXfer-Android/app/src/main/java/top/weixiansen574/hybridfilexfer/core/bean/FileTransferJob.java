@@ -5,6 +5,7 @@ import java.io.File;
 import top.weixiansen574.hybridfilexfer.core.Utils;
 
 public class FileTransferJob {
+
     public final File localDir;
     public final String remoteDir;
     public final File targetFile;
@@ -30,7 +31,7 @@ public class FileTransferJob {
         this.isSlice = true;
     }
 
-    public FileTransferJob(FileTransferJob oldJob,long startRange, long endRange) {
+    public FileTransferJob(FileTransferJob oldJob, long startRange, long endRange) {
         this.localDir = oldJob.localDir;
         this.remoteDir = oldJob.remoteDir;
         this.targetFile = oldJob.targetFile;
@@ -62,7 +63,7 @@ public class FileTransferJob {
         // 计算targetFile相对于rootDir的路径
         String relativePath = targetPath.startsWith(localDirPath) ? targetPath.substring(localDirPath.length()) : targetPath;
 
-        //和谐“非法”字符，并统一使用"/"做分割符
+        //替换“非法”字符，并统一使用"/"做分割符
         relativePath = processFileNamesAccordingToTheSystem(relativePath);
         // 拼接远程路径
         return remotePath + (remotePath.endsWith("/") ? "" : "/") + relativePath;
@@ -82,5 +83,17 @@ public class FileTransferJob {
     }
     public long getTotalSize(){
         return targetFile.length();
+    }
+
+    @Override
+    public String toString() {
+        return "FileTransferJob{" +
+                "localDir=" + localDir +
+                ", remoteDir='" + remoteDir + '\'' +
+                ", targetFile=" + targetFile +
+                ", isSlice=" + isSlice +
+                ", startRange=" + startRange +
+                ", endRange=" + endRange +
+                '}';
     }
 }

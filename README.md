@@ -1,9 +1,11 @@
-# 双轨快传
-双轨快传，一个可以同时使用USB和WIFI传输文件到电脑的软件
+# 多轨快传
+多轨快传，一个可以同时使用USB和WIFI等多张网卡传输文件到电脑的软件
 
-USB2.0+WIFI6_1000mbps网口可以跑到150MB/s（40+110MB/s）！
+USB2.0+WIFI6（千兆网口）可以跑到150MB/s（40+110MB/s）！
 
-## 速度测试
+USB2.0+WIFI6_5G:160mhz+WIFI6_2.4G:40mhz 可以跑到200+MB/s！
+
+## 速度测试（USB2.0+WIFI6:GbE）
 
 ![PixPin_2024-04-15_20-42-19](PixPin_2024-04-15_20-42-19.png)
 
@@ -15,60 +17,98 @@ USB2.0+WIFI6_1000mbps网口可以跑到150MB/s（40+110MB/s）！
 
 ## 模式
 
-支持普通模式和Root模式，Root模式可访问`~/Android/data/`与`/data/data/`目录下的文件。
+支持普通模式和Root模式，Root模式可访问`~/Android/data/`与`/data/data/`等目录下的文件。
 
 Root模式需要安装[Sui模块](https://github.com/RikkaApps/Sui/releases)，若你已有Magisk的root，还需要刷入这个模块。
 
+## 网卡与通道
+
+选择要进行传输的网卡，一个网卡一个通道。
+
+只要能被识别为网卡的，都会显示在网卡列表中，比如这些
+
+- 连接一个WIFI
+- 连接双WLAN加速的辅助WIFI
+- 打开热点
+- USB网络共享
+- 蓝牙网络共享（不建议用）
+- 物理以太网口
+- VPN软件的TUN网卡（请勿选择）
+
+请选择**可以同电脑进行局域网传输**的网卡
+
+USB_ADB的连接比较特殊，它是通过`adb forward tcp:<port> tcp:<port>`转发命令实现的，开启一个在本机的端口使其能使用USB线路进行网络传输
+
+### 电脑端启动
+
+参数说明
+
+```
+-c 控制通道连接方式 "adb" 或 网络ip
+-s adb连接方式下指定的设备（adb有多设备的情况），你可以用"adb devices"命令查看设备
+示例：
+-c adb
+-c adb -s abcd1234
+-c 192.168.1.2
+```
+
+完整启动命令示例
+
+```
+java -jar HybridFileXfer.jar -c adb
+java -jar HybridFileXfer.jar -c adb -s abcd1234
+java -jar HybridFileXfer.jar -c 192.168.1.2
+```
+
 ## 连接
 
-先插上数据线并连接WIFI，WIFI需要与电脑处在同一局域网内（推荐电脑使用网线直连路由器）
+插上数据线并连接WIFI，WIFI**需要与电脑处在同一局域网内**（推荐电脑使用网线直连路由器）
 
-设置开启USB调试，这是使用USB传输的依赖（原理：`adb forward tcp:<port> tcp:<port>`，把手机的服务端端口转发到电脑上，以此建立TCP连接）
+通道分为控制通道与传输通道
 
-主界面选择好模式后点击按钮`启动服务器并等待连接`，状态显示“等待电脑连接”后，电脑双击运行`启动.bat`。如果提示没有java，则需要[安装java运行环境](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)，安装过程不过多阐述，与我的世界安装java环境过程一致。程序首先执行adb转发端口（USB通道），若电脑未授权USB调试，请点击手机上的“允许这台电脑进行调试”。端口转发完成后，电脑端自动获取手机的WLAN IP地址，两条线路连接成功后即可进行文件传输。
+`-c` 参数指定的是控制通道的连接方式，为`adb`或IP地址，IP地址可填写任意一个手机的网卡IP。
 
-<img src="IMG_20240326_195738.jpg" alt="IMG_20240326_195738" style="zoom:50%;" />
+USB_ADB的连接需要USB调试，请到开发者选项中打开，**如果你因各种原因不能使用ADB，可以改用USB网络共享代替ADB。**
 
+主界面选择好模式后点击按钮`启动服务器并等待连接`，状态显示“等待连接”后，电脑双击运行启动脚本`启动_ADB连接.bat`（或者你根据启动参数自己编写一个）。如果提示没有java，则需要[安装java运行环境](https://www.oracle.com/java/technologies/javase/jdk17-archive-downloads.html)，安装过程不过多阐述，与我的世界安装java环境过程一致。ADB连接方式下，程序首先执行adb转发端口（USB通道），若电脑未授权USB调试，请点击手机上的“允许这台电脑进行调试”。端口转发完成后，启动电脑客户端，客户端先连接控制通道，然后从控制通道获取手机指定的传输通道网卡信息，然后电脑客户端连接到这些传输通道网卡，选择的线路都连接成功后，『传输文件』按钮亮起即可进行文件传输。
 
+|                        选择模式与网卡                        |                           电脑连接                           |
+| :----------------------------------------------------------: | :----------------------------------------------------------: |
+| ![Screenshot_2024-10-13-13-21-20-325_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-13-21-20-325_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-13-20-59-747_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-13-20-59-747_top.weixiansen574.hybridfilexfer.jpg) |
 
-<img src="PixPin_2024-03-26_20-08-21.png" alt="PixPin_2024-03-26_20-08-21" style="zoom:38%;" />
+**电脑输出**
 
-
-
-<img src="IMG_20240326_195758.jpg" alt="IMG_20240326_195758" style="zoom:50%;" />
-
-### 返回上级目录
-
-按手机的返回键
-
-### adb指定设备
-
-v1.1版本新增，用命令行运行jar或者修改启动脚本，程序会在末尾添加adb参数
-
-```shell
-java -jar HybridFileXfer.jar <adb args...>
-#示例
-adb devices
-#List of devices attached
-#1234abcd	device
-#4321dcba	device
-
-java -jar HybridFileXfer.jar -s 1234abcd 
-#程序附加后
-adb -s 1234abcd forward tcp:5740 tcp:5740
 ```
+adb:5740
+USB_ADB : 5740 端口转发成功！
+正在连接 网卡名：USB_ADB 远程地址：127.0.0.1 绑定地址：null
+正在连接 网卡名：wlan1 远程地址：192.168.8.242 绑定地址：null
+正在连接 网卡名：wlan0 远程地址：192.168.8.146 绑定地址：null
+传输通道已全部连接完成
+```
+
+## 技巧
+
+- 小米手机：WLAN => WLAN助理 => 智能多网加速 => 双WLAN加速，选择第二条不同频段的WIFI，可实现5Ghz+2.4Ghz加速！其他手机自行探索。
+
+- 如果你没有路由器，但电脑有无线网卡，可以手机打开热点给电脑或反过来操作，即可建立电脑与手机之间的无线局域网，进行文件传输
+
+- 如果5Ghz频段WIFI已可以跑满你电脑的千兆网口，你没有2.5G网口，如何通过双WLAN加速来提高传输速度？
+
+  - 如果电脑还有一个无线网卡。电脑打开一个不同频段的热点，然后手机连接电脑的热点作为辅助WLAN。或者手机打开与已连接WIFI不同频段的热点（切勿相同频段，能打开成功但一定会干扰降速！），电脑连接手机开的热点。
+
+  - 如果电脑有两个千兆网卡。方法一是网卡合并，效果最好但是难以操作。方法二：两条网线都插入路由器，此时两张网卡各自一个IP地址。手机开启双WLAN加速，连接两个频段的WIFI。返回软件，此时由于电脑两张网卡都连接着同一上级路由，若系统默认分配，可能双WLAN的流量都走同一张网卡！所以需要在手机上设置『电脑指定网卡IP』使这两条通道各自走独立的电脑网卡。各自填写上对应的电脑网卡IP即可。
+
 
 ### Linux电脑
 
-v1.1新增对Linux的支持，下载对应的电脑客户端即可，解压后执行
+v1.1新增对Linux的支持，下载对应的电脑客户端即可，解压后执行对应命令，例如
 
 ```shell
-java -jar HybridFileXfer.jar
+java -jar HybridFileXfer.jar -c adb
 ```
 
-或者双击start.bat
-
-目前仅支持x86 CPU的电脑，虽然Java是跨平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录
+目前仅支持x86 CPU的电脑，虽然Java是跨平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录。又或者使用USB网络共享。
 
 ~~可以试试termux-adb+Java运行环境两台手机对拷🤣~~
 
@@ -84,8 +124,10 @@ UI是双排文件管理器（照搬的MT管理器）。左边文件列表是当�
 
 例如：/sdcard/ > [/sdcard/test/] ==> E:\\transfer\\ > [E:/transfer/test/]
 
-| ![](Screenshot_2024-03-26-21-11-17-731_com.mxtech.videoplayer.pro.jpg) | ![](Screenshot_2024-03-26-18-48-58-368_com.mxtech.videoplayer.pro.jpg) |
+|                                                              |                                                              |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer](E:\HybridFileXfer\Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer](E:\HybridFileXfer\Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer.jpg) |
+
 
 传输完毕后，点击右上角“←”退出文件列表，点击停止服务器以正常断开与电脑的连接。
 
@@ -105,9 +147,9 @@ v1.2.0新增书签功能。
 
 点击右上角菜单，书签列表。点击要跳转的书签即可跳转至目标目录。
 
-| 右上角菜单                                                   | 添加书签                                                     | 书签列表                                                     | 跳转后                                                       |
-| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![](Screenshot_2024-05-07-13-31-36-224_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-34-976_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer](Screenshot_2024-05-07-13-17-21-991_top.weixiansen574.hybridfilexfer.jpg) | ![](Screenshot_2024-05-07-13-30-10-779_top.weixiansen574.hybridfilexfer.jpg) |
+| 右上角菜单                                                   | 添加书签                                                     | 书签列表                                                     |
+| ------------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| ![Screenshot_2024-10-13-14-16-19-518_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-14-16-19-518_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-14-16-22-997_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-14-16-22-997_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-14-20-12-558_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-14-20-12-558_top.weixiansen574.hybridfilexfer.jpg) |
 
 *演示中的~/Android/data/……目录需要root访问（安卓11以上）*
 
@@ -115,7 +157,7 @@ v1.2.0新增书签功能。
 
 # 原理
 
-创建一个文件传输任务队列（BlockedQueue），两个线程同步到这个队列拿取任务，对应一个文件或文件切片。
+创建一个文件传输任务队列，两个线程同步到这个队列拿取任务，对应一个文件或文件切片。
 
 传输多个小于64MB的文件时，每条线路各自传输不同的文件。
 
@@ -123,18 +165,23 @@ v1.2.0新增书签功能。
 
 具体请查看源码
 
+# 魔法
+
+禁止以任何形式在飞机杯社区（酷安）分享本软件，否则后果自负！
+
+![酷安真正的logo](飞机杯社区（迫真）.svg)
+
 # 赞助
 
-赞助将用于[购买2.5G-WIFI6路由器](https://m.tb.cn/h.gcb0Q6flYgnOqrX?tk=ubRnWtrez83)，用于尝试双WIFI加速功能的开发（当然也不需要那个路由器我也会开发此功能，就是受限千兆网口，不知速度是否已提升）
+前赞助计划[2.5G-WIFI6 GL-MT6000 路由器](https://m.tb.cn/h.gcb0Q6flYgnOqrX?tk=ubRnWtrez83)，已通过大家的赞助+自己的费用购买到，谢谢大家的赞助！
+
+喜欢本软件可以赞助支持！
 
 请备注“赞助双轨快传-[你的github ID]”。所有赞助名单都将公布！
+
+若你想匿名赞助，请填写备注`赞助双轨快传`但不备注你的信息，**否则我无法判断收款码收款意图！将不会纳入赞助名单！**
 
 [查看赞助名单](./赞助名单.md)
 
 ![1706328825823](1706328825823.jpg)
 
-# 其他
-
-禁止以任何形式转载到飞机杯社区（酷安），否则后果自负！
-
-![酷安真正的logo](飞机杯社区（迫真）.svg)

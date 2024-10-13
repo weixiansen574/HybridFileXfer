@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/HybridFileXfer.iml" filepath="$PROJECT_DIR$/HybridFileXfer.iml" />
+      <module fileurl="file://$PROJECT_DIR$/HybridFileXfer-PC.iml" filepath="$PROJECT_DIR$/HybridFileXfer-PC.iml" />
     </modules>
   </component>
 </project>

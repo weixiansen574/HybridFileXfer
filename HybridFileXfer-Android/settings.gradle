@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HybirdFileXfer"
+rootProject.name = "HybridFileXfer"
 include ':app'

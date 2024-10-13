@@ -1,9 +1,13 @@
 package top.weixiansen574.hybridfilexfer.core.bean;
 
-import java.io.File;
-import java.io.Serializable;
+import android.os.Parcel;
+import android.os.Parcelable;
 
-public class RemoteFile implements Serializable {
+import androidx.annotation.NonNull;
+
+import java.io.File;
+
+public class RemoteFile implements Parcelable {
     protected String name;
     protected String path;
     protected long lastModified;
@@ -34,8 +38,17 @@ public class RemoteFile implements Serializable {
         this.isDirectory = file.isDirectory;
     }
 
+    protected RemoteFile(Parcel in) {
+        this.name = in.readString();
+        this.path = in.readString();
+        this.lastModified = in.readLong();
+        this.size = in.readLong();
+        this.isDirectory = in.readByte() != 0;
+    }
+
     protected RemoteFile(){}
 
+    @NonNull
     @Override
     public String toString() {
         return "RemoteFile{" +
@@ -63,4 +76,40 @@ public class RemoteFile implements Serializable {
     public long getSize() {
         return size;
     }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        dest.writeString(this.name);
+        dest.writeString(this.path);
+        dest.writeLong(this.lastModified);
+        dest.writeLong(this.size);
+        dest.writeByte(this.isDirectory ? (byte) 1 : (byte) 0);
+    }
+
+    public void readFromParcel(Parcel source) {
+        this.name = source.readString();
+        this.path = source.readString();
+        this.lastModified = source.readLong();
+        this.size = source.readLong();
+        this.isDirectory = source.readByte() != 0;
+    }
+
+
+
+    public static final Creator<RemoteFile> CREATOR = new Creator<RemoteFile>() {
+        @Override
+        public RemoteFile createFromParcel(Parcel source) {
+            return new RemoteFile(source);
+        }
+
+        @Override
+        public RemoteFile[] newArray(int size) {
+            return new RemoteFile[size];
+        }
+    };
 }

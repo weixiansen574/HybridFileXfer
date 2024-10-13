@@ -1,19 +1,18 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
-    <style name="Base.Theme.HybirdFileXfer" parent="Theme.AppCompat.DayNight.DarkActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorPrimaryDark">@color/primary</item>
-        <item name="titleTextColor">@color/white</item>
-        <item name="windowActionBar">true</item>
+    <style name="Base.Theme.HybridFileXfer2" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
     </style>
-    <style name="Theme.HybridFileXfer.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
-        <item name="colorPrimary">@color/primary</item>
-        <item name="colorControlNormal">@color/white</item>
-        <item name="colorPrimaryDark">@color/primary</item>
+
+    <style name="Theme.HybridFileXfer2" parent="Base.Theme.HybridFileXfer2" />
+    <style name="Theme.HybridFileXfer2.NoActionBar" parent="Theme.AppCompat.DayNight.NoActionBar">
         <item name="titleTextColor">@color/white</item>
-        <item name="windowActionBar">true</item>
+        <item name="colorPrimaryDark">@color/primary_dark_material_dark</item>
+        <item name="colorPrimary">@color/primary_material_dark</item>
+        <!--<item name="colorControlNormal">@color/white</item>-->
     </style>
-    <style name="Theme.HybridFileXfer" parent="Base.Theme.HybirdFileXfer" />
+    <style name="ActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="colorControlNormal">@color/white</item>
+    </style>
 </resources>

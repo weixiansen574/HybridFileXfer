@@ -14,7 +14,7 @@
         android:id="@+id/file_icon"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:layout_marginStart="20dp"
+        android:layout_marginStart="18dp"
         android:src="@drawable/folder"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/file_name"

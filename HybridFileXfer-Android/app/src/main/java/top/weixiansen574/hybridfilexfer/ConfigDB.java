@@ -17,9 +17,16 @@ import top.weixiansen574.hybridfilexfer.bean.BookMark;
 @SuppressLint("Range")
 public class ConfigDB extends SQLiteOpenHelper {
     public static final int VERSION = 1;
-
-    public ConfigDB(@Nullable Context context) {
+    private static ConfigDB instance;
+    private ConfigDB(@Nullable Context context) {
         super(context, "config", null, VERSION);
+    }
+
+    public synchronized static ConfigDB getInstance(Context context){
+        if (instance == null){
+            instance = new ConfigDB(context.getApplicationContext());
+        }
+        return instance;
     }
 
     @Override

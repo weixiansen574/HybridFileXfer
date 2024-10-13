@@ -1,134 +1,141 @@
 package top.weixiansen574.hybridfilexfer;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
-import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
-import android.hardware.input.InputManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
-import android.os.RemoteException;
 import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Set;
 
 import rikka.shizuku.Shizuku;
 import rikka.sui.Sui;
-import top.weixiansen574.hybridfilexfer.droidcore.Error;
-import top.weixiansen574.hybridfilexfer.droidcore.ParcelableFileTransferEvent;
-import top.weixiansen574.hybridfilexfer.droidcore.ParcelableTransferredBytesInfo;
+import top.weixiansen574.hybridfilexfer.core.HFXServer;
+import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
+import top.weixiansen574.hybridfilexfer.listadapter.NetCardsAdapter;
+import top.weixiansen574.hybridfilexfer.tasks.StartServerTask;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceConnection {
-    private Context context;
-    private Button btn_start_server;
-    private Button btn_to_transfer;
+public class MainActivity extends AppCompatActivity implements View.OnClickListener,ServiceConnection{
+    public static final int CODE_REQUEST_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = 1;
+    public static final int CODE_TRANSFER = 2;
+    private NetCardsAdapter netCardsAdapter;
     private Spinner spinner;
-    private TextView usb_state, wifi_state;
-    //private ServiceConnection connection;
-    private boolean isRoot;
-    private ConnectThread connectThread;
-    private ITransferService iTransferService;
+    Button startServer;
+    Button toTransfer;
+    Context context;
+    private boolean isRoot = false;
+    private boolean state = true;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
-
-        usb_state = findViewById(R.id.usb_state);
-        wifi_state = findViewById(R.id.wifi_state);
-
+        startServer = findViewById(R.id.start_server);
+        startServer.setOnClickListener(this);
+        toTransfer = findViewById(R.id.to_transfer);
+        toTransfer.setOnClickListener(this);
         spinner = findViewById(R.id.spinner_mode);
-        btn_start_server = findViewById(R.id.start_server);
-        btn_to_transfer = findViewById(R.id.to_transfer);
+        findViewById(R.id.refresh).setOnClickListener(this);
 
-        spinner = findViewById(R.id.spinner_mode);
+        RecyclerView recyclerView = findViewById(R.id.rec_view_net_cards);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        layoutManager.setOrientation(RecyclerView.VERTICAL);
+        recyclerView.setLayoutManager(layoutManager);
 
-        btn_start_server.setOnClickListener(this);
-        btn_to_transfer.setOnClickListener(this);
-        
-    }
+        try {
+            netCardsAdapter = new NetCardsAdapter(this);
+            recyclerView.setAdapter(netCardsAdapter);
+        } catch (IOException e) {
+            Toast.makeText(this, "发生错误，无法获取网卡列表，异常信息："+e.getMessage(), Toast.LENGTH_SHORT).show();
+            startServer.setEnabled(false);
+        }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.main_menu, menu);
-        return super.onCreateOptionsMenu(menu);
+
+
+       /* ArrayList<String> iNames = new ArrayList<>();
+        iNames.add("USB_ADB");
+        iNames.add("wlan0");
+        iNames.add("wlan1");
+        TransferDialog transferDialog = new TransferDialog(context, iNames);
+        transferDialog.show();*/
     }
 
     @Override
     public void onClick(View v) {
         int id = v.getId();
-        if (id == R.id.start_server) {
-            System.out.println(spinner.getSelectedItemPosition());
-            if (!checkPermissionOrRequest()) {
-                Toast.makeText(context, "需要文件读写权限", Toast.LENGTH_LONG).show();
-                return;
-            }
-            if (iTransferService == null) {
+        if (id == R.id.start_server){
+            if (state) {
                 startServer();
             } else {
-                stopServerAndDisconnectService();
+                stopServer();
             }
-        } else if (id == R.id.to_transfer) {
-            Intent intent = new Intent(context, TransferActivity.class);
-            intent.putExtra("isRoot", isRoot);
-            startActivity(intent);
+        } else if (id == R.id.to_transfer){
+            startActivityForResult(new Intent(context, TransferActivity.class),1);
+        } else if (id == R.id.refresh){
+            if (state){
+                try {
+                    netCardsAdapter.reload();
+                } catch (SocketException | UnknownHostException e) {
+                    Toast.makeText(context, "加载网卡列表失败，异常信息："+e, Toast.LENGTH_SHORT).show();
+                }
+            } else {
+                Toast.makeText(context, "请先停止服务端再刷新网卡列表", Toast.LENGTH_SHORT).show();
+            }
         }
-
     }
 
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        ITransferService iTransferService = ITransferService.Stub.asInterface(service);
-        System.out.println("已连接service，IBinder:" + service + " iTransferService:" + iTransferService);
-        if (this.iTransferService == null) {
-            this.iTransferService = iTransferService;
-            onConnectedService(iTransferService);
+    private void stopServer() {
+        if (HFXSService.server != null) {
+            unbindService();
+            changeState(true);
+        }
+    }
+
+
+    public void startServer(){
+        if (!checkPermissionOrRequest()) {
+            Toast.makeText(context, "需要文件读写权限", Toast.LENGTH_LONG).show();
+            return;
+        }
+        List<ServerNetInterface> selectedInterfaces = netCardsAdapter.getSelectedInterfaces();
+        if (selectedInterfaces == null){
+            return;
+        }
+        if (selectedInterfaces.isEmpty()){
+            Toast.makeText(context, "没有网卡选择", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (spinner.getSelectedItemPosition() == 0){
+            isRoot = false;
         } else {
-            System.out.println("应该是sui重复启动service，不做处理");
-        }
-
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        System.out.println(name + "已断开连接");
-    }
-
-
-    private void startServer() {
-
-        if (spinner.getSelectedItemPosition() == 1) {
-            System.out.println("以Root用户启动服务");
             if (!Sui.init(getPackageName())){
                 Toast.makeText(context, "未安装Sui模块，若你已有Magisk的root，还需要刷入这个模块", Toast.LENGTH_SHORT).show();
                 return;
@@ -140,88 +147,114 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
             }
             isRoot = true;
-        } else {
-            System.out.println("以普通用户启动服务");
-            isRoot = false;
         }
-
-        btn_start_server.setEnabled(false);
-        bindService();
+        bindAndStartService();
     }
 
-
-    private void bindService() {
-        if (isRoot) {
-            Shizuku.bindUserService(Utils.getUserServiceArgs(context), this);
+    private void bindAndStartService(){
+        changeState(false);
+        if (isRoot){
+            Shizuku.bindUserService(HFXSService.getUserServiceArgs(context), this);
         } else {
-            Intent intent = new Intent(context, TransferServices.class);
-            bindService(intent, this, Service.BIND_AUTO_CREATE);
+            Intent intent = new Intent(context, HFXSService.class);
+            bindService(intent,this,Service.BIND_AUTO_CREATE);
         }
     }
 
-    private void unbindService() {
-        if (isRoot) {
-            Shizuku.unbindUserService(Utils.getUserServiceArgs(context), this, true);
+    private void unbindService(){
+        toTransfer.setEnabled(false);
+        if (isRoot){
+            Shizuku.unbindUserService(HFXSService.getUserServiceArgs(context),this,true);
         } else {
             unbindService(this);
         }
+        HFXSService.server = null;
+        changeState(true);
     }
 
-    private void onConnectedService(ITransferService service) {
-        btn_start_server.setEnabled(true);
-        usb_state.setText("等待电脑连接");
-        wifi_state.setText("等待电脑连接");
-        btn_start_server.setText("停止服务器");
-        connectThread = new ConnectThread(this, service);
-        connectThread.start();
-    }
+    @Override
+    public void onServiceConnected(ComponentName name, IBinder service) {
+        IHFXService ihfxService = IHFXService.Stub.asInterface(service);
+        HFXServer server = new HFXServer(ihfxService);
+        HFXSService.server = server;
+        List<ServerNetInterface> selectedInterfaces = netCardsAdapter.getSelectedInterfaces();
 
-    public void stopServerAndDisconnectService() {
-        btn_start_server.setEnabled(false);
-        new Thread(new Runnable() {
+        new StartServerTask(new StartServerTask.EventHandler() {
             @Override
-            public void run() {
-                try {
-                    System.out.println("正在等待服务端停止");
-                    iTransferService.stopServer();
-                    System.out.println("服务端已停止");
-
-                    if (connectThread != null) {
-                        connectThread.shutdown();
-                        try {
-                            connectThread.join();
-                        } catch (InterruptedException ignored) {
-                        }
-                    }
-                    runOnUiThread(() -> {
-                        unbindService();
-                        onServerStopped();
-                    });
-                } catch (RemoteException e) {
-                    runOnUiThread(() -> {
-                        unbindService();
-                        onServerStopped();
-                    });
+            public void onStatedServer() {
+                Toast.makeText(context, "服务已启动", Toast.LENGTH_SHORT).show();
+                for (ServerNetInterface selectedInterface : netCardsAdapter.getSelectedInterfaces()) {
+                    netCardsAdapter.changeItemState(selectedInterface.name,"等待连接");
                 }
+            }
+
+            @Override
+            public void onBindFailed(int port) {
+                unbindService();
+                Toast.makeText(context, "启动服务失败，端口："+port+" 被占用", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onConnectSuccess() {
+                toTransfer.setEnabled(true);
+            }
+
+            @Override
+            public void onAccepted(String name) {
+                netCardsAdapter.changeItemState(name,"已连接");
+            }
+
+            @Override
+            public void onAcceptFailed(String name) {
+                netCardsAdapter.changeItemState(name,"连接失败");
+            }
+
+            @Override
+            public void onServerClose() {
+                Toast.makeText(context, "服务已关闭", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(Throwable th) {
+                Toast.makeText(context, "服务已停止", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onComplete() {
+                /*new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ArrayList<String> files = new ArrayList<>();
+                        files.add("/storage/emulated/0/DCIM/Camera/VID_20240801_073044.mp4");
+                        server.sendFilesToRemote(files,"/storage/emulated/0/DCIM/Camera/","D:\\文件传输测试");
+                    }
+                }).start();*/
 
             }
-        }).start();
+        },server,selectedInterfaces).execute();
+
+
     }
 
-    private void onServerStopped(){
-        iTransferService = null;
-        usb_state.setText("未运行");
-        wifi_state.setText("未运行");
-        btn_start_server.setText("启动服务器并等待连接");
-        btn_start_server.setEnabled(true);
-        btn_to_transfer.setEnabled(false);
+    @Override
+    public void onServiceDisconnected(ComponentName name) {
+        if (HFXSService.server != null) {
+            toTransfer.setEnabled(false);
+            HFXSService.server = null;
+            changeState(true);
+        }
+        System.out.println("onServiceDisconnected");
     }
 
-    private void onServerStarted() {
-        usb_state.setText("已连接");
-        wifi_state.setText("已连接");
-        btn_to_transfer.setEnabled(true);
-
+    private void changeState(boolean state){
+        this.state = state;
+        if (state){
+            netCardsAdapter.setEnableModify(true);
+            startServer.setText("启动服务器并等待连接");
+        } else {
+            netCardsAdapter.setEnableModify(false);
+            startServer.setText("停止服务");
+        }
     }
 
     private boolean checkPermissionOrRequest() {
@@ -232,8 +265,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return true;
             } else {
                 // 请求文件访问权限
-                Intent intent = new Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION);
-                startActivityForResult(intent, 0);
+                Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                //添加包名，不然要在设置中翻列表
+                intent.setData(Uri.parse("package:" + context.getPackageName()));
+                startActivityForResult(intent, CODE_REQUEST_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 return false;
             }
         } else {
@@ -251,52 +286,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    public static class ConnectThread extends Thread {
-        private final MainActivity activity;
-        private boolean shutdown = false;
-        private final ITransferService service;
-
-        public ConnectThread(MainActivity activity, ITransferService service) {
-            this.activity = activity;
-            this.service = service;
-        }
-
-        @Override
-        public void run() {
-            try {
-                Error error = service.startServer();
-                activity.runOnUiThread(() -> {
-                    if (error != null) {
-                        //shutdown的判断应该放在UI线程内
-                        if (!shutdown) {
-                            Toast.makeText(activity, error.getErrorCode() == Error.CODE_PORT_IS_OCCUPIED ?
-                                            "端口被占用，启动失败，请停止占用5740,5741,5742端口的程序！" :
-                                            "服务端启动失败，因为：" + error.getExceptionMessage()
-                                    , Toast.LENGTH_SHORT).show();
-                            activity.stopServerAndDisconnectService();
-                        } else {
-                            System.out.println("已shutdown，不执行解绑service");
-                        }
-                    } else {
-                        activity.onServerStarted();
-                    }
-                });
-                //如果服务器等待至被连接时无错误，则进行等待直到正常退出或异常退出
-                if (error == null) {
-                    service.waitingForDied();
-                    System.out.println("服务已正常退出");
-                }
-            } catch (RemoteException e) {
-                activity.runOnUiThread(() -> {
-                    Toast.makeText(activity, "服务异常退出！", Toast.LENGTH_SHORT).show();
-                    activity.stopServerAndDisconnectService();
-                });
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CODE_TRANSFER){
+            if (data == null){
+                return;
+            }
+            if (data.getBooleanExtra("shutdown_server", false)) {
+                unbindService();
             }
         }
+    }
 
-        public void shutdown() {
-            shutdown = true;
+    @Override
+    protected void onResume() {
+        super.onResume();
+        HFXServer server = HFXSService.server;
+        if (server != null) {
+            if (server.isFailed()){
+                System.out.println("服务已失效，关闭服务");
+                unbindService();
+            }
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main_menu, menu);
+        return super.onCreateOptionsMenu(menu);
     }
 
     @Override
@@ -315,14 +333,5 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        if (iTransferService != null) {
-            System.out.println("正在销毁服务……");
-            unbindService();
-        }
     }
 }

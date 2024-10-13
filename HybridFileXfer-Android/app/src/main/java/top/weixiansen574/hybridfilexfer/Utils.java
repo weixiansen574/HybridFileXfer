@@ -1,34 +1,15 @@
 package top.weixiansen574.hybridfilexfer;
 
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.ServiceConnection;
-import android.os.IBinder;
-
-import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
-import rikka.shizuku.Shizuku;
-import top.weixiansen574.hybridfilexfer.droidcore.ParcelableRemoteFile;
+import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 
 public class Utils {
-    private static Shizuku.UserServiceArgs args;
-
-    public static synchronized Shizuku.UserServiceArgs getUserServiceArgs (Context context){
-        if (args == null){
-            args = new Shizuku.UserServiceArgs(new ComponentName(context, TransferServiceBinder.class))
-                    .daemon(false)
-                    .processNameSuffix("TransferServiceBinder")
-                    .debuggable(true)
-                    .version(1);
-        }
-        return args;
-    }
-
-    public static void sortFiles(List<ParcelableRemoteFile> fileList) {
+    public static final String ILLEGAL_CHARACTERS = "<>:\"/\\|?*";
+    public static void sortFiles(List<RemoteFile> fileList) {
         // 使用Comparator自定义比较规则
         fileList.sort((f1, f2) -> {
             // 文件夹优先于文件
@@ -48,16 +29,16 @@ public class Utils {
 
     public static String getParentByPath(String path) {
         //如果末尾没有路径分隔符，则添加路径分隔符
-        if (!path.endsWith(String.valueOf(File.separatorChar))){
-            path += File.separatorChar;
+        if (!path.endsWith("/")){
+            path += "/";
         }
-        int lastIndex = path.lastIndexOf(File.separatorChar);
+        int lastIndex = path.lastIndexOf("/");
         if (lastIndex != -1) {
-            int secondLastIndex = path.lastIndexOf(File.separatorChar, lastIndex - 1);
+            int secondLastIndex = path.lastIndexOf("/", lastIndex - 1);
             if (secondLastIndex != -1) {
-                return path.substring(0, secondLastIndex) + File.separatorChar;
+                return path.substring(0, secondLastIndex) + "/";
             } else if (lastIndex != 0){//windows盘符路径特殊适配，如"C:/"返回"/"
-                return File.separator;
+                return "/";
             }
         }
         return null; // No parent path found
@@ -91,5 +72,29 @@ public class Utils {
         return String.format(Locale.getDefault(),"%.2fGB", size / (1024.0 * 1024.0 * 1024.0));
     }
 
+    public static boolean containsIllegalCharacters(String text) {
+        for (char c : ILLEGAL_CHARACTERS.toCharArray()) {
+            if (text.indexOf(c) >= 0) {
+                return true; // 如果找到非法字符，返回 true
+            }
+        }
+        return false; // 如果没有找到非法字符，返回 false
+    }
+
+    public static int matchIconIdForIName(String iName){
+        if (iName.startsWith("wlan")) {
+            return R.drawable.wifi;
+        } else if (iName.equals("USB_ADB")) {
+            return R.drawable.usb;
+        } else if (iName.startsWith("rndis")){
+            return R.drawable.usb;
+        } else if (iName.startsWith("bt")){
+            return R.drawable.bt;
+        } else if (iName.startsWith("tun")) {//VPN开的虚拟网卡
+            return R.drawable.ethernet;
+        } else {
+            return R.drawable.ethernet;
+        }
+    }
 
 }

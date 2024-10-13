@@ -20,7 +20,14 @@
                 android:id="@+id/add_bookmark"
                 android:icon="@drawable/baseline_bookmark_add_24"
                 android:title="添加书签"/>
+            <item
+                android:id="@+id/jump"
+                android:icon="@drawable/baseline_arrow_outward_24"
+                android:title="跳转路径"/>
+            <item
+                android:id="@+id/mkdir"
+                android:icon="@drawable/baseline_add_24"
+                android:title="新建文件夹"/>
         </menu>
     </item>
-
 </menu>
