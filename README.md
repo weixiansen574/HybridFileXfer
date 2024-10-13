@@ -126,7 +126,7 @@ UI是双排文件管理器（照搬的MT管理器）。左边文件列表是当�
 
 |                                                              |                                                              |
 | ------------------------------------------------------------ | ------------------------------------------------------------ |
-| ![Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer](E:\HybridFileXfer\Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer](E:\HybridFileXfer\Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer.jpg) |
+| ![Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-13-59-51-358_top.weixiansen574.hybridfilexfer.jpg) | ![Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer](Screenshot_2024-10-13-14-00-12-221_top.weixiansen574.hybridfilexfer.jpg) |
 
 
 传输完毕后，点击右上角“←”退出文件列表，点击停止服务器以正常断开与电脑的连接。
