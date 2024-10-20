@@ -25,20 +25,25 @@ public class HFXClient {
     List<TransferChannel> transferChannels = new ArrayList<>();
     boolean isRun = true;
 
-    public HFXClient(String serverControllerAddress, int serverPort) throws IOException {
+    public HFXClient(String serverControllerAddress, int serverPort) {
         this.serverControllerAddress = serverControllerAddress;
         this.serverPort = serverPort;
     }
 
-    public boolean connect() throws IOException{
-        socket = new Socket(serverControllerAddress, serverPort);
-        dis = new DataInputStream(socket.getInputStream());
-        dos = new DataOutputStream(socket.getOutputStream());
-        dos.write(clientHeader);
-        dos.writeInt(VERSION_CODE);
-        if (!dis.readBoolean()) {
-            System.out.println("版本不一致，你的版本：" + VERSION_CODE + "，对方版本：" + dis.readInt());
-            socket.close();
+    public boolean connect() throws IOException {
+        try {
+            socket = new Socket(serverControllerAddress, serverPort);
+            dis = new DataInputStream(socket.getInputStream());
+            dos = new DataOutputStream(socket.getOutputStream());
+            dos.write(clientHeader);
+            dos.writeInt(VERSION_CODE);
+            if (!dis.readBoolean()) {
+                System.out.println("版本不一致，你的版本：" + VERSION_CODE + "，对方版本：" + dis.readInt());
+                socket.close();
+                return false;
+            }
+        } catch (IOException e) {
+            System.out.println("控制通道连接到手机失败，请检查手机的服务端是否启动？");
             return false;
         }
         int ipCount = dis.readInt();
@@ -70,7 +75,7 @@ public class HFXClient {
             InetAddress bindAddress = bindAddresses[i];
             System.out.printf("正在连接 网卡名：%s 远程地址：%s 绑定地址：%s\n", name, inetAddress.getHostAddress(), bindAddress == null ?
                     "null" : bindAddress.getHostAddress());
-            if (name.equals("USB_ADB") && !serverControllerAddress.equals("127.0.0.1")){
+            if (name.equals("USB_ADB") && !serverControllerAddress.equals("127.0.0.1")) {
                 System.err.println("错误：你在手机上选用了USB_ADB网卡，但没有使用ADB进行连接");
                 dos.writeBoolean(false);
                 socket.close();
@@ -121,7 +126,6 @@ public class HFXClient {
     }
 
 
-
     private void handleDeleteFile() throws IOException {
         dos.writeBoolean(deleteLocalFile(dis.readUTF()));
     }
@@ -150,7 +154,7 @@ public class HFXClient {
     private void handleMkdir() throws IOException {
         String parent = dis.readUTF();
         String child = dis.readUTF();
-        dos.writeBoolean(new File(parent,child).mkdirs());
+        dos.writeBoolean(new File(parent, child).mkdirs());
     }
 
     private void handleShutdown() {
