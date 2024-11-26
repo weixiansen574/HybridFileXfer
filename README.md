@@ -185,3 +185,18 @@ v1.2.0新增书签功能。
 
 ![1706328825823](1706328825823.jpg)
 
+## 许可证
+
+本项目使用的JDK来源于 **Dragonwell JDK**，该部分代码受到 **GNU General Public License version 2 (GPL-2.0)**，并且附加 **Classpath Exception** 的保护。
+
+**Dragonwell JDK** 的许可证原文请参见 [Dragonwell JDK License](https://github.com/dragonwell-project/dragonwell21/blob/master/LICENSE)。
+
+本项目整体使用 **GNU General Public License version 3 (GPL-3.0)**，许可证文件可以在 [LICENSE](./LICENSE) 文件中找到。
+
+### Dragonwell JDK License
+
+**Dragonwell JDK** 的代码基于 **GPL-2.0** 发布，并附有 **Classpath Exception**。这些条款允许您将该库与其他独立的模块链接，以创建和分发符合其他许可证要求的可执行文件。
+
+特别说明：
+- 如果你将本项目进行分发，务必保留 **Dragonwell JDK** 的版权声明和许可证原文。
+- 本项目中的其他部分基于 **GPL-3.0**，这意味着任何对本项目的修改和分发必须符合 GPL-3.0 的条款。
