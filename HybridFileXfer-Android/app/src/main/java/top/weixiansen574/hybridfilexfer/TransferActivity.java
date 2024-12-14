@@ -243,6 +243,7 @@ public class TransferActivity extends AppCompatActivity {
         } else if (id == R.id.jump) {
             View dialogView = View.inflate(context,R.layout.edit_text,null);
             EditText editText = dialogView.findViewById(R.id.edit_text);
+            editText.setText(isLeftFocus ? leftRVAdapter.getCurrentDir() : rightRVAdapter.getCurrentDir());
             AlertDialog dialog = new AlertDialog.Builder(context)
                     .setTitle("跳转路径" + (isLeftFocus ? "（手机目录）" : "（电脑目录）"))
                     .setView(dialogView)
