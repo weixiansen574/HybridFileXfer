@@ -3,4 +3,5 @@
     <string name="app_name">多轨快传</string>
     <string name="ok" >@android:string/ok</string>
     <string name="cancel">@android:string/cancel</string>
+
 </resources>

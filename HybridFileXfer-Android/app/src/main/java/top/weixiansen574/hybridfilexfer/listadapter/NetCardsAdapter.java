@@ -55,12 +55,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
         holder.txvNameAndState.setText(itemServerNetInterface.name + " | "+itemServerNetInterface.state);
         holder.txvIP.setText(itemServerNetInterface.address.getHostAddress());
         String iName = itemServerNetInterface.name;
-        boolean enableBindIpInput = true;
-        if (iName.equals("USB_ADB")){
-            enableBindIpInput = false;
-        } else if (iName.startsWith("tun")){//VPN开的虚拟网卡，默认不勾选
-            itemServerNetInterface.enable = false;
-        }
+        boolean enableBindIpInput = !iName.equals("USB_ADB");
         holder.imgInterfaceType.setImageDrawable(context.getDrawable(Utils.matchIconIdForIName(iName)));
 
         holder.editClientBindIP.setEnabled(enableModify && enableBindIpInput);
@@ -203,7 +198,12 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
                 InetAddress address = inetAddresses.nextElement();
                 if (!address.isLoopbackAddress() && address instanceof Inet4Address
                         && !networkInterface.getDisplayName().startsWith("rmnet_data"/*数据流量除外*/)) {
-                    netInterfaceList.add(new ItemServerNetInterface(networkInterface.getDisplayName(), address,"未运行"));
+                    ItemServerNetInterface item = new ItemServerNetInterface(networkInterface.getDisplayName(), address, "未运行");
+                    //VPN开的虚拟网卡，默认不勾选
+                    if (item.name.startsWith("tun")){
+                        item.enable = false;
+                    }
+                    netInterfaceList.add(item);
                     System.out.println(networkInterface.getDisplayName() + "  " + address);
                 }
             }

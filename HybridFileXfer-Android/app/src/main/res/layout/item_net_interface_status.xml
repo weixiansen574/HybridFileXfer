@@ -27,7 +27,7 @@
 
                 android:gravity="center_vertical"
                 android:text="USB"
-                android:textColor="@color/black"
+                android:textColor="@color/fond"
                 android:textSize="15sp" />
 
             <ImageView
@@ -42,7 +42,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="0B/s"
-                android:textColor="@color/black"
+                android:textColor="@color/fond"
                 android:textSize="13sp" />
 
             <ImageView
@@ -57,7 +57,7 @@
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
                 android:text="0B/s"
-                android:textColor="@color/black"
+                android:textColor="@color/fond"
                 android:textSize="13sp" />
         </LinearLayout>
 

@@ -52,8 +52,13 @@ public class Main {
         try {
             // 获取当前jar包所在的目录
             String jarDirectory = System.getProperty("user.dir");
+            String adbPath = System.getenv("ADB_PATH"); // 获取环境变量ADB_PATH
+            if (adbPath == null || adbPath.isEmpty()) {
+                adbPath = "./adb"; // 如果未设置环境变量，默认使用当前目录下的adb
+            }
+
             StringBuilder adbCommand = new StringBuilder();
-            adbCommand.append("./adb");
+            adbCommand.append(adbPath);
             if (device != null) {
                 adbCommand.append(" -s ").append(device);
             }
@@ -68,12 +73,11 @@ public class Main {
             // 执行adb forward命令
             Process process = Runtime.getRuntime().exec(adbForwardCommand, null, new java.io.File(jarDirectory));
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
-            //BufferedReader errorReader = process.errorReader();
             String l;
             while ((l = errorReader.readLine()) != null) {
                 System.err.println(l);
             }
-            // 读取adb forward命令执行的输出
+
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
@@ -89,5 +93,4 @@ public class Main {
             return false; // 执行失败
         }
     }
-
 }

@@ -24,6 +24,7 @@ import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.Spinner;
 import android.widget.Toast;
@@ -44,12 +45,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int CODE_REQUEST_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = 1;
     public static final int CODE_TRANSFER = 2;
     private NetCardsAdapter netCardsAdapter;
-    private Spinner spinner;
+    private Spinner spinnerMode;
     Button startServer;
     Button toTransfer;
     Context context;
     private boolean isRoot = false;
     private boolean state = true;
+    private Config config;
 
 
     @Override
@@ -57,11 +59,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         context = this;
+        config = Config.getInstance(context);
         startServer = findViewById(R.id.start_server);
         startServer.setOnClickListener(this);
         toTransfer = findViewById(R.id.to_transfer);
         toTransfer.setOnClickListener(this);
-        spinner = findViewById(R.id.spinner_mode);
+        spinnerMode = findViewById(R.id.spinner_mode);
         findViewById(R.id.refresh).setOnClickListener(this);
 
         RecyclerView recyclerView = findViewById(R.id.rec_view_net_cards);
@@ -77,6 +80,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             startServer.setEnabled(false);
         }
 
+        spinnerMode.setSelection(config.getMode());
+
+        spinnerMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                config.setMode(position);
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+
+            }
+        });
 
 
        /* ArrayList<String> iNames = new ArrayList<>();
@@ -133,10 +149,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        if (spinner.getSelectedItemPosition() == 0){
+        if (spinnerMode.getSelectedItemPosition() == 0){
             isRoot = false;
         } else {
             if (!Sui.init(getPackageName())){
+                //TODO 对话框提示去安装
                 Toast.makeText(context, "未安装Sui模块，若你已有Magisk的root，还需要刷入这个模块", Toast.LENGTH_SHORT).show();
                 return;
             } else {

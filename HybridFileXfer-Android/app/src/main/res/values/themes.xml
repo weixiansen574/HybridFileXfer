@@ -15,4 +15,10 @@
     <style name="ActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorControlNormal">@color/white</item>
     </style>
+<!--    <style name="PopupMenuStyle" parent="ThemeOverlay.AppCompat.Light">-->
+<!--        &lt;!&ndash; 设置菜单项文字颜色 &ndash;&gt;-->
+<!--        <item name="android:textColor">@color/fond</item>-->
+<!--        <item name="android:background">@color/black</item>-->
+<!--    </style>-->
+
 </resources>

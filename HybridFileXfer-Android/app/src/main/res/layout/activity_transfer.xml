@@ -19,14 +19,9 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@color/primary"
-            android:theme="@style/ActionBar">
+            android:theme="@style/ActionBar"
+            app:popupTheme="@style/Theme.HybridFileXfer2" >
 
-            <!-- <FrameLayout
-                 android:id="@+id/frame_tool"
-                 android:layout_width="match_parent"
-                 android:layout_height="match_parent">
-
-             </FrameLayout>-->
         </androidx.appcompat.widget.Toolbar>
 
         <include layout="@layout/toolbar_select"

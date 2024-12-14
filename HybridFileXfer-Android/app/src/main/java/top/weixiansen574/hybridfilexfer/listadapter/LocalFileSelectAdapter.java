@@ -1,6 +1,7 @@
 package top.weixiansen574.hybridfilexfer.listadapter;
 
 import android.app.Activity;
+import android.os.Environment;
 import android.view.View;
 import android.widget.Toast;
 
@@ -31,7 +32,11 @@ public class LocalFileSelectAdapter extends FileSelectAdapter {
 
     @Override
     protected String getDefaultDir() {
-        return "/storage/emulated/0/";
+        //return "/storage/emulated/0/";
+        //改用方法获取内置存储目录，部分安卓设备的内部可能不是/storage/emulated/0/，导致读取目录失败
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath();
+        System.out.println("手机内置存储目录："+path);
+        return path;
     }
 
     @Override

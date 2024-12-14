@@ -28,7 +28,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="连接"
-                    android:textColor="@color/black"
+                    android:textColor="@color/fond"
                     android:textSize="22sp"
                     app:layout_constraintStart_toStartOf="parent" />
 
@@ -38,7 +38,7 @@
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="模式:"
-                    android:textColor="@color/black"
+                    android:textColor="@color/fond"
                     android:textSize="16sp"
                     app:layout_constraintStart_toEndOf="@+id/textView2" />
 

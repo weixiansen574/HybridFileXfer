@@ -4,6 +4,8 @@
     <color name="white">#FFFFFFFF</color>
     <color name="primary">#212121</color>
     <color name="background">?android:attr/colorBackground</color>
-    <color name="blue_background_dark">#67bfe1</color>
-    <color name="blue_background_light">#e3f2fd</color>
+    <color name="blue_background_dark">#1E88E5</color>
+    <color name="blue_background_light">#E3F2FD</color>
+    <color name="fond">@color/black</color>
+    <color name="shadow_end">#59000000</color>
 </resources>

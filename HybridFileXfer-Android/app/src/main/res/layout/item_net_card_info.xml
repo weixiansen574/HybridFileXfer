@@ -25,7 +25,7 @@
             android:layout_height="25dp"
             android:layout_marginStart="10dp"
             android:text="wlan0 | 未运行"
-            android:textColor="@color/black"
+            android:textColor="@color/fond"
             android:textSize="18sp"
             app:layout_constraintStart_toEndOf="@+id/img_interface_type"
             app:layout_constraintTop_toTopOf="@+id/img_interface_type" />
@@ -62,7 +62,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
             android:text="电脑指定网卡IP："
-            android:textColor="@color/black"
+            android:textColor="@color/fond"
             android:textSize="14sp" />
 
         <EditText

@@ -38,7 +38,6 @@ public class JobPool {
         }
 
         if (fileQueue.isEmpty()) {
-            //若没任务了就会一直等待，直到另一个线程添加任务
             return null;
         }
 

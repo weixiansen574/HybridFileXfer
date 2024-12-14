@@ -4,11 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:foreground="?android:attr/selectableItemBackground"
     android:gravity="center_vertical"
     android:orientation="horizontal"
     android:padding="5dp"
-    android:paddingEnd="8dp"
-    android:foreground="?android:attr/selectableItemBackground">
+    android:paddingEnd="8dp">
 
     <!-- 图标 -->
     <ImageView
@@ -24,7 +24,6 @@
         app:layout_constraintTop_toTopOf="parent" />
 
 
-
     <!-- 文件名 -->
     <TextView
         android:id="@+id/file_name"
@@ -34,12 +33,12 @@
         android:ellipsize="end"
         android:maxLines="2"
         android:text="FileName"
-        android:textColor="@android:color/black"
+        android:textColor="@color/fond"
         android:textSize="12sp"
         app:layout_constrainedWidth="true"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@id/file_icon"
-        app:layout_constraintTop_toTopOf="parent"/>
+        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/date_time"
@@ -56,8 +55,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
 
-        android:textSize="9sp"
         android:layout_marginStart="3dp"
+        android:textSize="9sp"
         app:layout_constraintBottom_toBottomOf="@+id/date_time"
         app:layout_constraintStart_toEndOf="@+id/date_time" />
 
