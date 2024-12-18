@@ -52,13 +52,23 @@ public class Main {
         try {
             // 获取当前jar包所在的目录
             String jarDirectory = System.getProperty("user.dir");
-            String adbPath = System.getenv("ADB_PATH"); // 获取环境变量ADB_PATH
-            if (adbPath == null || adbPath.isEmpty()) {
-                adbPath = "./adb"; // 如果未设置环境变量，默认使用当前目录下的adb
+
+            // 执行 adb version 命令来检查 adb 是否在环境变量中
+            Process process = Runtime.getRuntime().exec("adb version");
+            int exitCode = process.waitFor();
+
+            // 如果 adb version 执行成功，则说明 adb 已在环境变量中
+            String adbPath;
+            if (exitCode == 0) {
+                adbPath = "adb"; // 环境变量中找到adb
+            } else {
+                adbPath = "./adb"; // 如果没有找到adb，使用当前目录下的 adb
             }
 
+            // 构建adb forward命令
             StringBuilder adbCommand = new StringBuilder();
             adbCommand.append(adbPath);
+
             if (device != null) {
                 adbCommand.append(" -s ").append(device);
             }
@@ -67,30 +77,29 @@ public class Main {
             adbCommand.append(" tcp:");
             adbCommand.append(port);
 
-            // 构建adb forward命令
-            String adbForwardCommand = adbCommand.toString();
-
             // 执行adb forward命令
-            Process process = Runtime.getRuntime().exec(adbForwardCommand, null, new java.io.File(jarDirectory));
-            BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()));
+            Process forwardProcess = Runtime.getRuntime().exec(adbCommand.toString(), null, new java.io.File(jarDirectory));
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(forwardProcess.getErrorStream()));
             String l;
             while ((l = errorReader.readLine()) != null) {
                 System.err.println(l);
             }
 
-            BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
+            // 读取adb forward命令执行的输出
+            BufferedReader reader = new BufferedReader(new InputStreamReader(forwardProcess.getInputStream()));
             String line;
             while ((line = reader.readLine()) != null) {
                 System.out.println("adb:" + line);
             }
 
             // 等待命令执行完成
-            int exitCode = process.waitFor();
-            return exitCode == 0;
+            int forwardExitCode = forwardProcess.waitFor();
+            return forwardExitCode == 0;
 
         } catch (IOException | InterruptedException e) {
             e.printStackTrace();
             return false; // 执行失败
         }
     }
+
 }
