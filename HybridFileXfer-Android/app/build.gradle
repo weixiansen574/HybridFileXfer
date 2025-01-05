@@ -7,6 +7,7 @@ android {
     compileSdk 34
 
     defaultConfig {
+        //applicationId "com.antutu.ABenchMark" //改成此包名提升传输速度😆
         applicationId "top.weixiansen574.hybridfilexfer"
         minSdk 24
         targetSdk 34
