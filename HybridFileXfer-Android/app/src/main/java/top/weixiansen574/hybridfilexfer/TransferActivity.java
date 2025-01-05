@@ -68,7 +68,7 @@ public class TransferActivity extends AppCompatActivity {
 
         server = HFXSService.server;
         if (server == null) {
-            Toast.makeText(this, "服务未运行", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, R.string.fu_wu_wei_yun_xing, Toast.LENGTH_SHORT).show();
             finish();
             return;
         }
@@ -104,22 +104,22 @@ public class TransferActivity extends AppCompatActivity {
         rightList.setOnTouchListener(onTouchListener);
 
         leftRVAdapter.setOnToTransferListener((selectedItems, dir) -> new AlertDialog.Builder(context)
-                .setTitle("确认传输")
-                .setMessage("是否将选中的 " + selectedItems.size() + " 个文件传输到电脑目录：\n" + rightRVAdapter.getCurrentDir())
-                .setPositiveButton("确定", (dialog, which) -> {
+                .setTitle(R.string.que_ren_chuan_shu)
+                .setMessage(getString(R.string.chuan_shu_dao_dian_nao_mu_lu,selectedItems.size(),rightRVAdapter.getCurrentDir()))
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
                     leftRVAdapter.cancelSelect();
                     sendFilesToRemote(selectedItems, dir, rightRVAdapter.getCurrentDir());
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show());
         rightRVAdapter.setOnToTransferListener((selectedItems, dir) -> new AlertDialog.Builder(context)
-                .setTitle("确认传输")
-                .setMessage("是否将选中的 " + selectedItems.size() + " 个文件传输到手机目录：\n" + leftRVAdapter.getCurrentDir())
-                .setPositiveButton("确定", (dialog, which) -> {
+                .setTitle(R.string.que_ren_chuan_shu)
+                .setMessage(getString(R.string.chuan_shu_dao_shou_ji_mu_lu,selectedItems.size(),leftRVAdapter.getCurrentDir()))
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
                     rightRVAdapter.cancelSelect();
                     sendFilesToShelf(selectedItems, leftRVAdapter.getCurrentDir(), dir);
                 })
-                .setNegativeButton("取消", null)
+                .setNegativeButton(R.string.cancel, null)
                 .show());
     }
 
@@ -187,25 +187,25 @@ public class TransferActivity extends AppCompatActivity {
             recyclerView.setLayoutManager(layoutManager);
             AlertDialog.Builder builder = new AlertDialog.Builder(context)
                     .setView(dialogView)
-                    .setPositiveButton("关闭",null);
+                    .setPositiveButton(R.string.close,null);
             if (isLeftFocus){
-                builder.setTitle("本地文件夹书签");
+                builder.setTitle(R.string.ben_di_wen_jian_jia_shu_qian);
                 recyclerView.setAdapter(new BookmarkAdapter(context,builder.show(),leftRVAdapter,false));
             } else {
-                builder.setTitle("电脑文件夹书签");
+                builder.setTitle(R.string.dian_nao_wen_jian_jia_shu_qian);
                 recyclerView.setAdapter(new BookmarkAdapter(context,builder.show(),rightRVAdapter,true));
             }
             return true;
         } else if (id == R.id.add_bookmark) {
             AlertDialog.Builder builder = new AlertDialog.Builder(context);
             if (isLeftFocus) {
-                builder.setTitle("确认添加到本地文件夹书签吗？")
+                builder.setTitle(R.string.que_ren_tian_jia_dao_ben_di_wen_jian_jia_shu_qian_ma)
                         .setMessage(leftRVAdapter.getCurrentDir())
                         .setPositiveButton(R.string.ok, (dialog, which) -> {
                             addBookmark(false,leftRVAdapter.getCurrentDir());
                         });
             } else {
-                builder.setTitle("确认添加到电脑文件夹书签吗？")
+                builder.setTitle(R.string.que_ren_tian_jia_dao_dian_nao_wen_jian_jia_shu_qian_ma)
                         .setMessage(rightRVAdapter.getCurrentDir())
                         .setPositiveButton(R.string.ok, (dialog, which) -> {
                             addBookmark(true,rightRVAdapter.getCurrentDir());
@@ -217,8 +217,11 @@ public class TransferActivity extends AppCompatActivity {
         } else if (id == R.id.mkdir){
             View dialogView = View.inflate(context,R.layout.edit_text,null);
             EditText editText = dialogView.findViewById(R.id.edit_text);
+            String title = isLeftFocus
+                    ? context.getString(R.string.create_folder_mobile)
+                    : context.getString(R.string.create_folder_computer);
             AlertDialog dialog = new AlertDialog.Builder(context)
-                    .setTitle("新建文件夹" + (isLeftFocus ? "（手机目录）" : "（电脑目录）"))
+                    .setTitle(title)
                     .setView(dialogView)
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.ok, null)
@@ -226,11 +229,11 @@ public class TransferActivity extends AppCompatActivity {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String input = editText.getText().toString();
                 if (TextUtils.isEmpty(input)){
-                    editText.setError("请输入文件名");
+                    editText.setError(getString(R.string.qing_shu_ru_wen_jian_ming));
                     return;
                 }
                 if (Utils.containsIllegalCharacters(input)){
-                    editText.setError("文件名不能包含这些字符：<>:\"/\\|?*");
+                    editText.setError(context.getString(R.string.invalid_filename_characters));
                     return;
                 }
                 dialog.dismiss();
@@ -244,8 +247,11 @@ public class TransferActivity extends AppCompatActivity {
             View dialogView = View.inflate(context,R.layout.edit_text,null);
             EditText editText = dialogView.findViewById(R.id.edit_text);
             editText.setText(isLeftFocus ? leftRVAdapter.getCurrentDir() : rightRVAdapter.getCurrentDir());
+            String title = isLeftFocus
+                    ? context.getString(R.string.jump_path_mobile)
+                    : context.getString(R.string.jump_path_computer);
             AlertDialog dialog = new AlertDialog.Builder(context)
-                    .setTitle("跳转路径" + (isLeftFocus ? "（手机目录）" : "（电脑目录）"))
+                    .setTitle(title)
                     .setView(dialogView)
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.ok, null)
@@ -253,7 +259,7 @@ public class TransferActivity extends AppCompatActivity {
             dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
                 String input = editText.getText().toString();
                 if (TextUtils.isEmpty(input)){
-                    editText.setError("请输入路径");
+                    editText.setError(getString(R.string.qing_shu_ru_lu_jing));
                     return;
                 }
                 dialog.dismiss();
@@ -282,10 +288,13 @@ public class TransferActivity extends AppCompatActivity {
             }
         }
         if (!exists) {
-            Toast.makeText(this, "已添加至"+(isRemote ? "电脑" : "本地")+"书签列表" ,
-                    Toast.LENGTH_LONG).show();
+            String message = isRemote
+                    ? getString(R.string.bookmark_added_remote)
+                    : getString(R.string.bookmark_added_local);
+
+            Toast.makeText(this, message, Toast.LENGTH_LONG).show();
         } else {
-            Toast.makeText(this, "书签已存在", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, R.string.shu_qian_yi_cun_zai, Toast.LENGTH_LONG).show();
         }
     }
 
@@ -333,7 +342,7 @@ public class TransferActivity extends AppCompatActivity {
             server.markFailed();
             transferDialog.dismiss();
             new AlertDialog.Builder(context)
-                    .setMessage("请求电脑端接收文件失败，连接可能已断开")
+                    .setMessage(R.string.qing_qiu_dian_nao_duan_jie_shou_wen_jian_shi_bai)
                     .setCancelable(false)
                     .setPositiveButton(R.string.ok, (dialog, which) -> context.finish())
                     .show();
@@ -344,7 +353,7 @@ public class TransferActivity extends AppCompatActivity {
             server.markFailed();
             transferDialog.dismiss();
             new AlertDialog.Builder(context)
-                    .setMessage("请求电脑端发送文件失败，连接可能已断开")
+                    .setMessage(R.string.qing_qiu_dian_nao_duan_fa_song_wen_jian_shi_bai)
                     .setCancelable(false)
                     .setPositiveButton(R.string.ok, (dialog, which) -> context.finish())
                     .show();
@@ -363,9 +372,9 @@ public class TransferActivity extends AppCompatActivity {
         @Override
         public void onTransferFailed(String exceptionMessage) {
             server.markFailed();
-            Toast.makeText(context, "传输时发生异常，请返回重连！", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, R.string.chuan_shu_shi_fa_sheng_yi_chang, Toast.LENGTH_LONG).show();
             transferDialog.setCloseBtnEnable(true);
-            transferDialog.setButton("退出", v -> context.finish());
+            transferDialog.setButton(context.getString(R.string.exit), v -> context.finish());
         }
 
         @Override

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="select_mode">
-        <item>正常</item>
+        <item>@string/normal</item>
         <item>Root</item>
     </string-array>
 </resources>

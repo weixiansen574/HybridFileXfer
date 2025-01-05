@@ -9,9 +9,11 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.Manifest;
+import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -76,7 +78,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             netCardsAdapter = new NetCardsAdapter(this);
             recyclerView.setAdapter(netCardsAdapter);
         } catch (IOException e) {
-            Toast.makeText(this, "发生错误，无法获取网卡列表，异常信息："+e.getMessage(), Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
             startServer.setEnabled(false);
         }
 
@@ -119,10 +121,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 try {
                     netCardsAdapter.reload();
                 } catch (SocketException | UnknownHostException e) {
-                    Toast.makeText(context, "加载网卡列表失败，异常信息："+e, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
                 }
             } else {
-                Toast.makeText(context, "请先停止服务端再刷新网卡列表", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.qing_xian_ting_zhi_fu_wu_duan, Toast.LENGTH_SHORT).show();
             }
         }
     }
@@ -137,7 +139,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void startServer(){
         if (!checkPermissionOrRequest()) {
-            Toast.makeText(context, "需要文件读写权限", Toast.LENGTH_LONG).show();
+            Toast.makeText(context, R.string.xu_yao_wen_jian_du_xie_quan_xian, Toast.LENGTH_LONG).show();
             return;
         }
         List<ServerNetInterface> selectedInterfaces = netCardsAdapter.getSelectedInterfaces();
@@ -145,7 +147,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         if (selectedInterfaces.isEmpty()){
-            Toast.makeText(context, "没有网卡选择", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.mei_you_wang_ka_xuan_ze, Toast.LENGTH_SHORT).show();
             return;
         }
 
@@ -153,12 +155,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             isRoot = false;
         } else {
             if (!Sui.init(getPackageName())){
-                //TODO 对话框提示去安装
-                Toast.makeText(context, "未安装Sui模块，若你已有Magisk的root，还需要刷入这个模块", Toast.LENGTH_SHORT).show();
+                showInstallSuiDialog(context);
                 return;
             } else {
                 if(Shizuku.checkSelfPermission() != 0){
-                    Toast.makeText(context, "未授权，请点击弹窗的允许或自行到Sui管理面板允许", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.wei_shou_quan_sui_ti_shi, Toast.LENGTH_SHORT).show();
                     Shizuku.requestPermission(1);
                     return;
                 }
@@ -199,16 +200,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         new StartServerTask(new StartServerTask.EventHandler() {
             @Override
             public void onStatedServer() {
-                Toast.makeText(context, "服务已启动", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.fu_wu_yi_qi_dong, Toast.LENGTH_SHORT).show();
                 for (ServerNetInterface selectedInterface : netCardsAdapter.getSelectedInterfaces()) {
-                    netCardsAdapter.changeItemState(selectedInterface.name,"等待连接");
+                    netCardsAdapter.changeItemState(selectedInterface.name,getString(R.string.deng_dai_lian_jie));
                 }
             }
 
             @Override
             public void onBindFailed(int port) {
                 unbindService();
-                Toast.makeText(context, "启动服务失败，端口："+port+" 被占用", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, getString(R.string.service_start_failed,port), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -218,34 +219,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             @Override
             public void onAccepted(String name) {
-                netCardsAdapter.changeItemState(name,"已连接");
+                netCardsAdapter.changeItemState(name,getString(R.string.yi_lian_jie));
             }
 
             @Override
             public void onAcceptFailed(String name) {
-                netCardsAdapter.changeItemState(name,"连接失败");
+                netCardsAdapter.changeItemState(name,getString(R.string.lian_jie_shi_bai));
             }
 
             @Override
             public void onServerClose() {
-                Toast.makeText(context, "服务已关闭", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.fu_wu_yi_guan_bi, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onError(Throwable th) {
-                Toast.makeText(context, "服务已停止", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.fu_wu_yi_ting_zhi, Toast.LENGTH_SHORT).show();
             }
 
             @Override
             public void onComplete() {
-                /*new Thread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ArrayList<String> files = new ArrayList<>();
-                        files.add("/storage/emulated/0/DCIM/Camera/VID_20240801_073044.mp4");
-                        server.sendFilesToRemote(files,"/storage/emulated/0/DCIM/Camera/","D:\\文件传输测试");
-                    }
-                }).start();*/
 
             }
         },server,selectedInterfaces).execute();
@@ -267,10 +260,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         this.state = state;
         if (state){
             netCardsAdapter.setEnableModify(true);
-            startServer.setText("启动服务器并等待连接");
+            startServer.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
         } else {
             netCardsAdapter.setEnableModify(false);
-            startServer.setText("停止服务");
+            startServer.setText(R.string.ting_zhi_fu_wu);
         }
     }
 
@@ -351,4 +344,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         return super.onOptionsItemSelected(item);
     }
+
+    public void showInstallSuiDialog(Context context) {
+        // 创建对话框
+        new AlertDialog.Builder(context)
+                .setTitle(R.string.wei_an_zhuang_sui_mo_kuai)
+                .setMessage(R.string.install_sui_hint)
+                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                    // 打开指定链接
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/RikkaApps/Sui/releases"));
+                    context.startActivity(intent);
+                })
+                .setNegativeButton(R.string.cancel, null)
+                .show();
+    }
+
 }

@@ -19,7 +19,6 @@ import java.util.concurrent.FutureTask;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import top.weixiansen574.hybridfilexfer.IHFXService;
-import top.weixiansen574.hybridfilexfer.MyException;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
 import top.weixiansen574.hybridfilexfer.core.bean.SocketConnectStatus;
@@ -201,7 +200,7 @@ public class HFXService extends IHFXService.Stub {
 
     @Override
     public void test() throws RemoteException {
-        throw new MyException("123");
+
         /*throw new NullPointerException("123");*/
     }
 

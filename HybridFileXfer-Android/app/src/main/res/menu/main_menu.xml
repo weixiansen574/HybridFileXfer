@@ -5,17 +5,17 @@
         android:id="@+id/more"
         android:icon="@drawable/baseline_more_vert_24"
         android:tint="#ffffff"
-        android:title="选项"
+        android:title="@string/options"
         app:showAsAction="ifRoom">
         <menu>
             <item
                 android:id="@+id/github"
                 android:icon="@drawable/github"
-                android:title="GitHub主页" />
+                android:title="@string/github_home_page" />
             <item
                 android:id="@+id/update"
                 android:icon="@drawable/baseline_update_24"
-                android:title="获取更新" />
+                android:title="@string/get_update" />
         </menu>
     </item>
 

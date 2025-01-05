@@ -31,7 +31,7 @@ import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.tasks.DeleteFilesTask;
 import top.weixiansen574.hybridfilexfer.tasks.ListFilesTask;
 
-public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectAdapter.ViewHolder> implements FastScroller.SectionIndexer  {
+public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectAdapter.ViewHolder> implements FastScroller.SectionIndexer {
     Activity context;
     LayoutInflater layoutInflater;
     protected HFXServer server;
@@ -72,8 +72,8 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                         files.add(file.getPath());
                     }
                     StringBuilder sb = new StringBuilder();
-                    sb.append("确认删除这 ").append(files.size()).append(" 个文件吗？\n");
-                    if (selectedItems.size() < 4){
+                    sb.append(context.getString(R.string.que_ren_shan_chu_, selectedItems.size()));
+                    if (selectedItems.size() < 4) {
                         for (String file : files) {
                             sb.append(file).append("\n");
                         }
@@ -85,15 +85,15 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                         sb.append("……");
                     }
                     new AlertDialog.Builder(context)
-                            .setTitle("确认删除")
+                            .setTitle(R.string.que_ren_shan_chu)
                             .setMessage(sb.toString())
-                            .setNegativeButton(R.string.cancel,null)
+                            .setNegativeButton(R.string.cancel, null)
                             .setPositiveButton(R.string.ok, (dialog, which) -> {
                                 cancelSelect();
 
                                 ProgressDialog progressDialog = new ProgressDialog(context);
                                 progressDialog.setProgress(0);
-                                progressDialog.setTitle("删除中……");
+                                progressDialog.setTitle(context.getString(R.string.shan_chu_zhong__));
                                 progressDialog.setMessage("");
                                 progressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
                                 progressDialog.setMax(files.size());
@@ -110,23 +110,23 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                                     public void onFailed(int index, String file) {
                                         progressDialog.dismiss();
                                         new AlertDialog.Builder(context)
-                                                .setTitle("删除文件失败")
-                                                .setMessage("第"+index+"个文件：\n"+file+"\n删除失败！")
-                                                .setPositiveButton(R.string.ok,null)
+                                                .setTitle(R.string.shan_chu_wen_jian_shi_bai)
+                                                .setMessage(context.getString(R.string.delete_failed_message, index, file))
+                                                .setPositiveButton(R.string.ok, null)
                                                 .show();
                                     }
 
                                     @Override
                                     public void onSuccess() {
                                         progressDialog.dismiss();
-                                        Toast.makeText(context, "文件删除成功！", Toast.LENGTH_SHORT).show();
+                                        Toast.makeText(context, R.string.file_delete_success, Toast.LENGTH_SHORT).show();
                                     }
 
                                     @Override
                                     public void onComplete() {
                                         refresh();
                                     }
-                                },this,files).execute();
+                                }, this, files).execute();
                             }).show();
                     return true;
                 });
@@ -149,10 +149,10 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
             itemView.setBackground(null);
             holder.fileIcon.setImageDrawable(context.getDrawable(R.drawable.folder));
             itemView.setOnClickListener(v -> {
-                if (!isSelectMode()){
+                if (!isSelectMode()) {
                     back();
                 } else {
-                    Toast.makeText(context, "请先取消选择！", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.qing_xian_qu_xiao_xuan_ze, Toast.LENGTH_SHORT).show();
                 }
             });
             itemView.setOnLongClickListener(null);
@@ -230,7 +230,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
 
     private void updateSelectedCount() {
         int size = selectedItems.size();
-        fileSelectToolbar.setTitle("已选择 " + size + " 项");
+        fileSelectToolbar.setTitle(context.getString(R.string.selected_items_count, size));
 
         if (selectedItems.isEmpty()) {
             fileSelectToolbar.setVisibility(View.INVISIBLE);
@@ -287,7 +287,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                     changeFiles(files);
                 } else {
                     cancelLoading();
-                    Toast.makeText(context, "进入目录失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.jin_ru_mu_lu_shi_bai, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -309,7 +309,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                     changeFiles(files);
                 } else {
                     cancelLoading();
-                    Toast.makeText(context, "跳转失败", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.tiao_zhuan_shi_bai, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -320,21 +320,21 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
         });
     }
 
-    public void refresh(){
+    public void refresh() {
         loading();
         listFilesASync(getCurrentDir(), files -> {
             if (files != null) {
                 changeFiles(files);
             } else {
                 cancelLoading();
-                Toast.makeText(context, "刷新失败", Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, R.string.shua_xin_shi_bai, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
     public void back() {
         if (positions.size() < 2) {
-            Toast.makeText(context, "已经到根目录了", Toast.LENGTH_SHORT).show();
+            Toast.makeText(context, R.string.yi_jing_dao_gen_mu_lu_le, Toast.LENGTH_SHORT).show();
             return;
         }
         loading();
@@ -347,7 +347,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                 if (files != null) {
                     if (files.isEmpty()) {
                         cancelLoading();
-                        Toast.makeText(context, "父目录文件数为空，为避免回不来不执行切换！", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.fu_mu_lu_wen_jian_shu_wei_kong, Toast.LENGTH_SHORT).show();
                     } else {
                         positions.removeLast();
                         System.out.println(positions);
@@ -356,7 +356,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                     }
                 } else {
                     cancelLoading();
-                    Toast.makeText(context, "无权访问上层目录", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, R.string.wu_quan_fang_wen_shang_ceng_mu_lu, Toast.LENGTH_SHORT).show();
                 }
             }
 
@@ -372,10 +372,11 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
     protected abstract void handleListException(Throwable th);
 
     protected abstract String getDefaultDir();
+
     //protected abstract void onDeleteFiles(List<String> files);
     public abstract boolean deleteFile(String file);
 
-    public abstract void mkdir(String parent,String child);
+    public abstract void mkdir(String parent, String child);
 
     private void listFilesASync(String path, ListFilesTask.CallBack callBack) {
         new ListFilesTask(callBack, path, this).execute();

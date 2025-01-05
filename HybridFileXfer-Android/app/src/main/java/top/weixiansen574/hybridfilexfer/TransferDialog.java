@@ -67,16 +67,16 @@ public class TransferDialog {
                 showEvent(event.iName, "▼ " + event.content);
                 break;
             case TransferEvent.TYPE_UPLOAD_OVER:
-                showEvent(event.iName, "上传完成");
+                showEvent(event.iName, context.getString(R.string.upload_completed));
                 break;
             case TransferEvent.TYPE_DOWNLOAD_OVER:
-                showEvent(event.iName, "下载完成");
+                showEvent(event.iName, context.getString(R.string.download_completed));
                 break;
             case TransferEvent.TYPE_ERROR:
-                showEvent(event.iName,"传输时发生错误："+event.content);
+                showEvent(event.iName,context.getString(R.string.error_occurred_during_transfer,event.content));
                 break;
             case TransferEvent.TYPE_INTERRUPTED:
-                showEvent(event.iName,"因其他通道发生了错误，传输已中断");
+                showEvent(event.iName,context.getString(R.string.transmission_interrupted));
                 break;
         }
     }

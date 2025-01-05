@@ -27,7 +27,7 @@
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="连接"
+                    android:text="@string/conn"
                     android:textColor="@color/fond"
                     android:textSize="22sp"
                     app:layout_constraintStart_toStartOf="parent" />
@@ -37,7 +37,7 @@
                     android:layout_width="60dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
-                    android:text="模式:"
+                    android:text="@string/mode_"
                     android:textColor="@color/fond"
                     android:textSize="16sp"
                     app:layout_constraintStart_toEndOf="@+id/textView2" />
@@ -70,7 +70,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_gravity="center_vertical"
-                        android:text="刷新" />
+                        android:text="@string/refresh" />
                 </LinearLayout>
 
             </androidx.constraintlayout.widget.ConstraintLayout>
@@ -86,7 +86,7 @@
                 style="@style/Widget.AppCompat.Button.Colored"
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
-                android:text="启动服务器并等待连接" />
+                android:text="@string/start_service_and_wait_onnect" />
 
             <Button
                 android:id="@+id/to_transfer"
@@ -94,7 +94,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="50dp"
                 android:enabled="false"
-                android:text="传输文件" />
+                android:text="@string/transfer_files" />
 
         </LinearLayout>
 

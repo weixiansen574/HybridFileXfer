@@ -5,29 +5,29 @@
         android:id="@+id/export_and_input"
         android:icon="@drawable/baseline_more_vert_24"
         android:tint="#ffffff"
-        android:title="选项"
+        android:title="@string/options"
         app:showAsAction="ifRoom">
         <menu>
             <item
                 android:id="@+id/refresh"
                 android:icon="@drawable/baseline_refresh_24"
-                android:title="刷新"/>
+                android:title="@string/refresh"/>
             <item
                 android:id="@+id/bookmark_list"
                 android:icon="@drawable/baseline_bookmarks_24"
-                android:title="书签列表"/>
+                android:title="@string/bookmark_list"/>
             <item
                 android:id="@+id/add_bookmark"
                 android:icon="@drawable/baseline_bookmark_add_24"
-                android:title="添加书签"/>
+                android:title="@string/add_bookmark"/>
             <item
                 android:id="@+id/jump"
                 android:icon="@drawable/baseline_arrow_outward_24"
-                android:title="跳转路径"/>
+                android:title="@string/jump_path"/>
             <item
                 android:id="@+id/mkdir"
                 android:icon="@drawable/baseline_add_24"
-                android:title="新建文件夹"/>
+                android:title="@string/mkdir"/>
         </menu>
     </item>
 </menu>

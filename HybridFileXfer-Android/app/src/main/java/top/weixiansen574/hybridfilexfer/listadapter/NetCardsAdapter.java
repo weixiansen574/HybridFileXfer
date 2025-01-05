@@ -120,7 +120,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
         this.enableModify = enableModify;
         if (enableModify){
             for (ItemServerNetInterface item : netInterfaceList) {
-                item.state = "未运行";
+                item.state = context.getString(R.string.not_run);
             }
         }
         notifyDataSetChanged();
@@ -134,7 +134,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
                     serverNetInterfaceList.add(netInterface.toServerNetInterface());
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(context, "无效IP：" + netInterface.clientBindAddress, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.Invalid_ip) + netInterface.clientBindAddress, Toast.LENGTH_SHORT).show();
                     return null;
                 }
             }
@@ -188,7 +188,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
 
     private ArrayList<ItemServerNetInterface> getNetInterfaces() throws SocketException, UnknownHostException {
         ArrayList<ItemServerNetInterface> netInterfaceList = new ArrayList<>();
-        netInterfaceList.add(new ItemServerNetInterface("USB_ADB", InetAddress.getByName("127.0.0.1"),"未运行"));
+        netInterfaceList.add(new ItemServerNetInterface("USB_ADB", InetAddress.getByName("127.0.0.1"),context.getString(R.string.not_run)));
         Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
         while (networkInterfaces.hasMoreElements()) {
             NetworkInterface networkInterface = networkInterfaces.nextElement();
@@ -198,7 +198,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
                 InetAddress address = inetAddresses.nextElement();
                 if (!address.isLoopbackAddress() && address instanceof Inet4Address
                         && !networkInterface.getDisplayName().startsWith("rmnet_data"/*数据流量除外*/)) {
-                    ItemServerNetInterface item = new ItemServerNetInterface(networkInterface.getDisplayName(), address, "未运行");
+                    ItemServerNetInterface item = new ItemServerNetInterface(networkInterface.getDisplayName(), address, context.getString(R.string.not_run));
                     //VPN开的虚拟网卡，默认不勾选
                     if (item.name.startsWith("tun")){
                         item.enable = false;

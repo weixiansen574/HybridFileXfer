@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content">
 
@@ -26,9 +27,10 @@
             android:layout_marginStart="10dp"
             android:text="wlan0 | 未运行"
             android:textColor="@color/fond"
-            android:textSize="18sp"
+            android:textSize="16sp"
             app:layout_constraintStart_toEndOf="@+id/img_interface_type"
-            app:layout_constraintTop_toTopOf="@+id/img_interface_type" />
+            app:layout_constraintTop_toTopOf="@+id/img_interface_type"
+            tools:ignore="HardcodedText" />
 
         <TextView
             android:id="@+id/txv_interface_ip"
@@ -44,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="10dp"
             android:id="@+id/cb_interface_enable"
-            android:text="启用"
+            android:text="@string/enable"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintTop_toTopOf="parent" />
@@ -61,7 +63,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="4dp"
-            android:text="电脑指定网卡IP："
+            android:text="@string/dian_nao_zhi_ding_wang_ka_ip"
             android:textColor="@color/fond"
             android:textSize="14sp" />
 
@@ -69,7 +71,7 @@
             android:layout_width="120sp"
             android:layout_height="wrap_content"
             android:id="@+id/edit_client_bind_ip"
-            android:hint="由系统默认分配"
+            android:hint="@string/you_xi_tong_mo_ren_fen_pei"
             android:textSize="14sp" />
     </LinearLayout>
 

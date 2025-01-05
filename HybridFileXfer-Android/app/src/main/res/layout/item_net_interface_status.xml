@@ -68,7 +68,7 @@
             android:lines="4"
             android:maxLines="4"
             android:ellipsize="end"
-            android:text="当前无任务" />
+            android:text="@string/dang_qian_wu_ren_wu" />
 
     </LinearLayout>
 </LinearLayout>
