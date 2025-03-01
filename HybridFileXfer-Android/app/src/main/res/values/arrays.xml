@@ -3,5 +3,6 @@
     <string-array name="select_mode">
         <item>@string/normal</item>
         <item>Root</item>
+        <item>ADB</item>
     </string-array>
 </resources>

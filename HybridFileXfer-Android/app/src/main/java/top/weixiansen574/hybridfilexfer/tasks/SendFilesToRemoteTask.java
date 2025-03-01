@@ -2,39 +2,27 @@ package top.weixiansen574.hybridfilexfer.tasks;
 
 import java.util.List;
 
-import top.weixiansen574.hybridfilexfer.core.HFXServer;
+import top.weixiansen574.async.BackstageTask;
+import top.weixiansen574.hybridfilexfer.core.bean.Directory;
+import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
+import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
 
-public class SendFilesToRemoteTask extends TransferTask<SendFilesToRemoteTask.EventHandler> {
-    List<String> files;
-    String localDir;
-    String remoteDir;
-
-    public SendFilesToRemoteTask(EventHandler uiHandler, HFXServer server, List<String> files, String localDir, String remoteDir) {
-        super(uiHandler,server);
+public class SendFilesToRemoteTask extends BackstageTask<BTransferFileCallback> {
+    private final HFXServer server;
+    private final List<RemoteFile> files;
+    private final Directory localDir;
+    private final Directory remoteDir;
+    public SendFilesToRemoteTask(BTransferFileCallback uiHandler, HFXServer server, List<RemoteFile> files, Directory localDir, Directory remoteDir) {
+        super(uiHandler);
+        this.server = server;
         this.files = files;
         this.localDir = localDir;
         this.remoteDir = remoteDir;
     }
 
     @Override
-    protected void onStart(EventHandler handler) throws Throwable {
-        if (!server.requestRemoteReceive()) {
-            handler.onRequestSendFailed();
-            return;
-        }
-        startEventReceiveThread(handler);
-        startSpeedMonitorThread(handler);
-        String exceptionMessage = server.sendFilesToRemote(files, localDir, remoteDir);
-        if (exceptionMessage == null) {
-            handler.onTransferOver();
-        } else {
-            handler.onTransferFailed(exceptionMessage);
-        }
-        cancelSpeedMonitorThread();
-    }
-
-    public interface EventHandler extends TransferTask.EventHandler {
-        void onRequestSendFailed();
+    protected void onStart(BTransferFileCallback callback) throws Throwable {
+        server.sendFilesToRemote(files,localDir,remoteDir,callback);
     }
 
 }

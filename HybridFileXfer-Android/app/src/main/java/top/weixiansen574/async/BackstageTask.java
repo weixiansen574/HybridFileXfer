@@ -20,6 +20,10 @@ public abstract class BackstageTask<T extends BackstageTask.BaseEventHandler> im
 
     protected abstract void onStart(T eventHandlerProxy) throws Throwable;
 
+    protected void onError(Throwable th){}
+
+    protected void onComplete(){}
+
     @SuppressWarnings("unchecked")
     @Override
     public void run() {
@@ -34,10 +38,12 @@ public abstract class BackstageTask<T extends BackstageTask.BaseEventHandler> im
                 new EvProxyHandler(uiHandler));
         try {
             onStart(proxyInstance);
+            onComplete();
             TaskManger.postOnUiThread(uiHandler::onComplete);
             isComplete = true;
         } catch (Throwable e) {
             e.printStackTrace();
+            onError(e);
             TaskManger.postOnUiThread(() -> uiHandler.onError(e));
         }
     }

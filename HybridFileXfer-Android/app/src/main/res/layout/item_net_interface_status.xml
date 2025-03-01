@@ -6,8 +6,8 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:padding="10dp">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -21,7 +21,7 @@
 
             <TextView
                 android:id="@+id/channel_name"
-                android:layout_width="75sp"
+                android:layout_width="80sp"
                 android:layout_height="match_parent"
                 android:layout_marginStart="2sp"
 
@@ -30,44 +30,57 @@
                 android:textColor="@color/fond"
                 android:textSize="15sp" />
 
-            <ImageView
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:padding="2dp"
-                android:src="@drawable/baseline_upload_24" />
+            <LinearLayout
+                android:id="@+id/upload_speed_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
 
-            <TextView
-                android:id="@+id/upload_speed"
-                android:layout_width="75sp"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="0B/s"
-                android:textColor="@color/fond"
-                android:textSize="13sp" />
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:importantForAccessibility="no"
+                    android:padding="2dp"
+                    android:src="@drawable/baseline_upload_24" />
 
-            <ImageView
-                android:layout_width="25dp"
-                android:layout_height="25dp"
-                android:padding="2dp"
-                android:src="@drawable/baseline_file_download_24" />
+                <TextView
+                    android:id="@+id/upload_speed"
+                    android:layout_width="80sp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="0B/s"
+                    android:textColor="@color/fond"
+                    android:textSize="13sp" />
+            </LinearLayout>
 
-            <TextView
-                android:id="@+id/download_speed"
-                android:layout_width="75sp"
-                android:layout_height="match_parent"
-                android:gravity="center_vertical"
-                android:text="0B/s"
-                android:textColor="@color/fond"
-                android:textSize="13sp" />
+            <LinearLayout
+                android:id="@+id/download_speed_group"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+
+                <ImageView
+                    android:layout_width="25dp"
+                    android:layout_height="25dp"
+                    android:padding="2dp"
+                    android:src="@drawable/baseline_file_download_24" />
+
+                <TextView
+                    android:id="@+id/download_speed"
+                    android:layout_width="80sp"
+                    android:layout_height="match_parent"
+                    android:gravity="center_vertical"
+                    android:text="0B/s"
+                    android:textColor="@color/fond"
+                    android:textSize="13sp" />
+            </LinearLayout>
         </LinearLayout>
 
         <TextView
             android:id="@+id/txv_transfer_event"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:ellipsize="end"
             android:lines="4"
             android:maxLines="4"
-            android:ellipsize="end"
             android:text="@string/dang_qian_wu_ren_wu" />
 
     </LinearLayout>

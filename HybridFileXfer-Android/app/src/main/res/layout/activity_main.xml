@@ -95,6 +95,12 @@
                 android:layout_height="50dp"
                 android:enabled="false"
                 android:text="@string/transfer_files" />
+           <!-- <Button
+                android:id="@+id/test"
+                style="@style/Widget.AppCompat.Button.Colored"
+                android:layout_width="match_parent"
+                android:layout_height="50dp"
+                android:text="测试" />-->
 
         </LinearLayout>
 

@@ -24,26 +24,6 @@ public class Utils {
         });
     }
 
-    //因为一个奇怪的问题：如果File对象是一些特殊的路径
-    //例如：/data/，那么getParent()方法返回的是null
-
-    public static String getParentByPath(String path) {
-        //如果末尾没有路径分隔符，则添加路径分隔符
-        if (!path.endsWith("/")){
-            path += "/";
-        }
-        int lastIndex = path.lastIndexOf("/");
-        if (lastIndex != -1) {
-            int secondLastIndex = path.lastIndexOf("/", lastIndex - 1);
-            if (secondLastIndex != -1) {
-                return path.substring(0, secondLastIndex) + "/";
-            } else if (lastIndex != 0){//windows盘符路径特殊适配，如"C:/"返回"/"
-                return "/";
-            }
-        }
-        return null; // No parent path found
-    }
-
     public static String formatSpeed(long bytesPerSecond){
         if (bytesPerSecond < 1024){
             return bytesPerSecond + "B/s";
@@ -57,6 +37,33 @@ public class Utils {
     public static String formatDateTime(long milliseconds){
         //格式化为年-月-日 时:分
         return new SimpleDateFormat("yy-MM-dd HH:mm", Locale.getDefault()).format(new Date(milliseconds));
+    }
+
+    /**
+     * 格式化毫秒数为指定的时间格式。
+     *
+     * @param milliseconds 输入的毫秒数
+     * @return 格式化后的时间字符串
+     */
+    public static String formatTime(long milliseconds) {
+        if (milliseconds < 0) {
+            throw new IllegalArgumentException("毫秒数不能为负数");
+        }
+
+        if (milliseconds < 1000) {
+            return milliseconds + "ms";
+        }
+
+        long totalSeconds = milliseconds / 1000;
+        long hours = totalSeconds / 3600;
+        long minutes = (totalSeconds % 3600) / 60;
+        long seconds = totalSeconds % 60;
+
+        if (hours == 0) {
+            return String.format(Locale.getDefault(),"%02d:%02d", minutes, seconds);
+        } else {
+            return String.format(Locale.getDefault(),"%02d:%02d:%02d", hours, minutes, seconds);
+        }
     }
 
     public static String formatFileSize(long size){

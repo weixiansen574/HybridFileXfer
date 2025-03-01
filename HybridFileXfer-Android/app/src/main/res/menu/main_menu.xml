@@ -16,6 +16,11 @@
                 android:id="@+id/update"
                 android:icon="@drawable/baseline_update_24"
                 android:title="@string/get_update" />
+            <item
+                android:id="@+id/buffer_count"
+                android:icon="@drawable/baseline_grid_view_24"
+                android:title="缓冲区设置" />
+
         </menu>
     </item>
 

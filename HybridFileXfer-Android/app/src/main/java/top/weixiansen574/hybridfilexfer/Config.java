@@ -24,8 +24,27 @@ public class Config {
         return preferences.getInt("mode",MODE_NORMAL);
     }
 
-    public Config setMode(int mode){
+    public void setMode(int mode){
         preferences.edit().putInt("mode",mode).apply();
-        return this;
+    }
+
+    public int getServerPort() {
+        return 5740;
+    }
+
+    public int getLocalBufferCount() {
+        return preferences.getInt("local_buffer_count",256);
+    }
+
+    public void setLocalBufferCount(int count){
+        preferences.edit().putInt("local_buffer_count",count).apply();
+    }
+
+    public int getRemoteBufferCount() {
+        return preferences.getInt("remote_buffer_count",512);
+    }
+
+    public void setRemoteBufferCount(int count){
+        preferences.edit().putInt("remote_buffer_count",count).apply();
     }
 }

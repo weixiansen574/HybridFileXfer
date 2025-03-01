@@ -2,38 +2,26 @@ package top.weixiansen574.hybridfilexfer.tasks;
 
 import java.util.List;
 
-import top.weixiansen574.hybridfilexfer.core.HFXServer;
+import top.weixiansen574.async.BackstageTask;
+import top.weixiansen574.hybridfilexfer.core.bean.Directory;
+import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
+import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
 
-public class SendFilesToShelfTask extends TransferTask<SendFilesToShelfTask.EventHandler> {
-    List<String> files;
-    String localDir;
-    String remoteDir;
-
-    public SendFilesToShelfTask(EventHandler uiHandler, HFXServer server, List<String> files, String localDir, String remoteDir) {
-        super(uiHandler, server);
+public class SendFilesToShelfTask extends BackstageTask<BTransferFileCallback> {
+    private final HFXServer server;
+    private final List<RemoteFile> files;
+    private final Directory localDir;
+    private final Directory remoteDir;
+    public SendFilesToShelfTask(BTransferFileCallback uiHandler, HFXServer server, List<RemoteFile> files, Directory localDir, Directory remoteDir) {
+        super(uiHandler);
+        this.server = server;
         this.files = files;
         this.localDir = localDir;
         this.remoteDir = remoteDir;
     }
 
     @Override
-    protected void onStart(EventHandler handler) throws Throwable {
-        if (!server.requestRemoteSend(files,localDir,remoteDir)) {
-            handler.onRequestReceiveFailed();
-            return;
-        }
-        startEventReceiveThread(handler);
-        startSpeedMonitorThread(handler);
-        String exceptionMessage = server.receiveFiles();
-        if (exceptionMessage == null) {
-            handler.onTransferOver();
-        } else {
-            handler.onTransferFailed(exceptionMessage);
-        }
-        cancelSpeedMonitorThread();
-    }
-
-    public interface EventHandler extends TransferTask.EventHandler{
-        void onRequestReceiveFailed();
+    protected void onStart(BTransferFileCallback callback) throws Throwable {
+        server.sendFilesToShelf(files,localDir,remoteDir,callback);
     }
 }

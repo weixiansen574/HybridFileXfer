@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.os.RemoteException;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +19,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.l4digital.fastscroll.FastScroller;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -26,8 +30,9 @@ import java.util.List;
 
 import top.weixiansen574.hybridfilexfer.R;
 import top.weixiansen574.hybridfilexfer.Utils;
-import top.weixiansen574.hybridfilexfer.core.HFXServer;
+import top.weixiansen574.hybridfilexfer.core.bean.Directory;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
+import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
 import top.weixiansen574.hybridfilexfer.tasks.DeleteFilesTask;
 import top.weixiansen574.hybridfilexfer.tasks.ListFilesTask;
 
@@ -45,6 +50,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
     private int lastSelectedCount = 0;
     private OnConfirmFileSelectionListener onConfirmFileSelectionListener;
     private LinkedList<DirPosition> positions = new LinkedList<>();
+    private final int fileSystem;
 
     public FileSelectAdapter(Activity context, View loadingView, RecyclerView recyclerView, LinearLayoutManager
             linearLayoutManager, Toolbar fileSelectToolbar, View.OnTouchListener onTouchListener, HFXServer server) {
@@ -55,6 +61,8 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
         this.linearLayoutManager = linearLayoutManager;
         this.onTouchListener = onTouchListener;
         this.fileSelectToolbar = fileSelectToolbar;
+
+        this.fileSystem = getFileSystem(server);
 
         layoutInflater = LayoutInflater.from(context);
         jump(getDefaultDir());
@@ -161,7 +169,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
             return;
         }
 
-        holder.dateTime.setText(Utils.formatDateTime(item.getLastModified()));
+        holder.dateTime.setText(Utils.formatDateTime(item.lastModified()));
         if (item.isDirectory()) {
             holder.fileSize.setText("");
         } else {
@@ -281,7 +289,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
             @Override
             public void onResult(List<RemoteFile> files) {
                 if (files != null) {
-                    DirPosition dirPosition = new DirPosition(dir, 0);
+                    DirPosition dirPosition = new DirPosition(new Directory(dir, fileSystem), 0);
                     positions.add(dirPosition);
                     recyclerView.scrollToPosition(0);
                     changeFiles(files);
@@ -304,7 +312,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
             @Override
             public void onResult(List<RemoteFile> files) {
                 if (files != null) {
-                    positions = createNewDirPositions(dir);
+                    positions = createNewDirPositions(new Directory(dir, fileSystem));
                     recyclerView.scrollToPosition(0);
                     changeFiles(files);
                 } else {
@@ -339,7 +347,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
         }
         loading();
         DirPosition dirPosition = positions.get(positions.size() - 2);
-        String dir = dirPosition.dir;
+        String dir = dirPosition.dir.path;
         System.out.println("back " + dir);
         listFilesASync(dir, new ListFilesTask.CallBack() {
             @Override
@@ -373,8 +381,10 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
 
     protected abstract String getDefaultDir();
 
+    protected abstract int getFileSystem(HFXServer server);
+
     //protected abstract void onDeleteFiles(List<String> files);
-    public abstract boolean deleteFile(String file);
+    public abstract boolean deleteFile(String file) throws RemoteException, IOException;
 
     public abstract void mkdir(String parent, String child);
 
@@ -404,45 +414,41 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
     }
 
     public String getCurrentDir() {
+        return getCurrentDirectory().path;
+    }
+
+    public Directory getCurrentDirectory(){
         return positions.get(positions.size() - 1).dir;
     }
 
     public interface OnConfirmFileSelectionListener {
-        void onConfirmFileSelection(List<String> selectedItems, String dir);
+        void onConfirmFileSelection(List<RemoteFile> selectedItems, Directory dir);
     }
 
     protected void onConfirmFileSelection(HashSet<RemoteFile> selectedItems) {
-        List<String> files = new ArrayList<>();
-        for (RemoteFile item : selectedItems) {
-            files.add(item.getPath());
-        }
+        List<RemoteFile> remoteFiles = new ArrayList<>(selectedItems);
         if (onConfirmFileSelectionListener != null) {
-            onConfirmFileSelectionListener.onConfirmFileSelection(files, getCurrentDir());
+            onConfirmFileSelectionListener.onConfirmFileSelection(remoteFiles, getCurrentDirectory());
         }
     }
 
 
-    private LinkedList<DirPosition> createNewDirPositions(String dir) {
+    private LinkedList<DirPosition> createNewDirPositions(@NotNull Directory directory) {
         LinkedList<DirPosition> positions = new LinkedList<>();
-        //dir = Utils.replaceBackslashToSlash(dir);
-        String parent = dir;
-        do {
-            /*if (!parent.endsWith("/")){
-                parent = parent + "/";
-            }*/
-            positions.add(new DirPosition(parent, 0));
-            parent = Utils.getParentByPath(parent);
-        } while (parent != null);
+        while (directory != null) {
+            positions.add(new DirPosition(directory, 0));
+            directory = directory.parent();
+        }
         Collections.reverse(positions);
         System.out.println(positions);
         return positions;
     }
 
     private static class DirPosition {
-        public String dir;
+        public Directory dir;
         public int position;
 
-        public DirPosition(String dir, int position) {
+        public DirPosition(Directory dir, int position) {
             this.dir = dir;
             this.position = position;
         }

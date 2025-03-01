@@ -35,7 +35,7 @@
         android:ellipsize="start"
         android:maxLines="1"
         android:text="FileName"
-        android:textColor="@android:color/black"
+        android:textColor="@color/fond"
         android:textSize="12sp"
         app:layout_constrainedWidth="true"
         app:layout_constraintBottom_toBottomOf="parent"

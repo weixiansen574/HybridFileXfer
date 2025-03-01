@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="HybridFileXfer-PC:jar-phone">
+    <output-path>$PROJECT_DIR$/out/artifacts/HybridFileXfer_PC_jar_phone</output-path>
+    <root id="archive" name="HybridFileXfer-PC.jar">
+      <element id="module-output" name="HybridFileXfer-PC" />
+    </root>
+  </artifact>
+</component>
