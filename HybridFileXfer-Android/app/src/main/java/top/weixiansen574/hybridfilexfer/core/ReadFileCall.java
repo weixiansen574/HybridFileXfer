@@ -81,6 +81,16 @@ public abstract class ReadFileCall implements Callable<Void> {
         long length = channel.size();
         long lastModified = file.lastModified();
         long remaining = length;
+        if (length == 0){
+            ByteBuffer buffer = buffers.take();
+            buffer.clear();
+            buffer.limit(0);
+            deque.add(new FileBlock(true,
+                    fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
+                    lastModified, length, 0, buffer));
+            closeFile(channel);
+            return;
+        }
         int i = 0;
         while (remaining > 0){
             int blkSize = (int) Math.min(remaining,FileBlock.BLOCK_SIZE);

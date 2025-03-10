@@ -15,8 +15,8 @@ import java.util.List;
 import top.weixiansen574.hybridfilexfer.MainActivity;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.R;
-import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
-//TODO 国际化
+import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
+
 public class RemoteFileSelectAdapter extends FileSelectAdapter {
 
     public RemoteFileSelectAdapter(Activity context, View loadingView, RecyclerView recyclerView, LinearLayoutManager
@@ -35,8 +35,8 @@ public class RemoteFileSelectAdapter extends FileSelectAdapter {
     }
 
     @Override
-    protected String getDefaultDir() {
-        return "/";
+    protected String getDefaultDir(HFXServer server) {
+        return server.getRemoteHomeDir();
     }
 
     @Override
@@ -57,10 +57,10 @@ public class RemoteFileSelectAdapter extends FileSelectAdapter {
                 boolean success = server.createRemoteDir(parent, child);
                 context.runOnUiThread(() -> {
                     if (success) {
-                        Toast.makeText(context, "创建成功", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.chuang_jian_cheng_gong, Toast.LENGTH_SHORT).show();
                         refresh();
                     } else {
-                        Toast.makeText(context, "创建失败", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(context, R.string.chuang_jian_shi_bai, Toast.LENGTH_SHORT).show();
                     }
                 });
             } catch (IOException e) {
@@ -69,11 +69,11 @@ public class RemoteFileSelectAdapter extends FileSelectAdapter {
         }).start();
     }
 
-    private void onConnectionLost(){
+    private void onConnectionLost() {
         context.setResult(MainActivity.RESULT_CODE_SERVER_DISCONNECT);
         new AlertDialog.Builder(context)
-                .setTitle("连接异常")
-                .setMessage("控通道的连接已断开，请退出后重新连接！")
+                .setTitle(R.string.chuang_jian_shi_bai)
+                .setMessage(R.string.kong_tong_dao_de_lian_jie_yi_duan_kai__)
                 .setCancelable(false)
                 .setPositiveButton(R.string.ok, (dialog, which) -> context.finish()).show();
     }

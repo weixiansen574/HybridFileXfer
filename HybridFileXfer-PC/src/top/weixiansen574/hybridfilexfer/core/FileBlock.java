@@ -1,5 +1,6 @@
 package top.weixiansen574.hybridfilexfer.core;
 
+import java.io.File;
 import java.nio.ByteBuffer;
 
 public class FileBlock implements Comparable<FileBlock> {

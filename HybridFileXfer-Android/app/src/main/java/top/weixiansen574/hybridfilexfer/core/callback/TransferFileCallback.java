@@ -24,7 +24,7 @@ public interface TransferFileCallback {
 
     void onWriteFileError(String message);
 
-    void onComplete(long traffic, long time);
+    void onComplete(boolean isUpload,long traffic, long time);
 
     //传输通道有其中一个断开时
     void onIncomplete();

@@ -1,0 +1,9 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="HybridFileXfer-PC:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/HybridFileXfer_PC_jar</output-path>
+    <root id="archive" name="HybridFileXfer-PC.jar">
+      <element id="module-output" name="HybridFileXfer-PC" />
+      <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/lib/annotations.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>

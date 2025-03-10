@@ -3,7 +3,7 @@ package top.weixiansen574.hybridfilexfer.tasks;
 import java.util.List;
 
 import top.weixiansen574.async.BackstageTask;
-import top.weixiansen574.hybridfilexfer.Utils;
+import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.listadapter.FileSelectAdapter;
 

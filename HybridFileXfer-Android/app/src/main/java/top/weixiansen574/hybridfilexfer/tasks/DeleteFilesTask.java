@@ -29,7 +29,7 @@ public class DeleteFilesTask extends BackstageTask<DeleteFilesTask.EventHandler>
         handler.onSuccess();
     }
 
-    public interface EventHandler extends BaseEventHandler{
+    public interface EventHandler extends BackstageTask.BaseEventHandler{
         void onDeleting(int index,String file);
         void onFailed(int index,String file);
         void onSuccess();

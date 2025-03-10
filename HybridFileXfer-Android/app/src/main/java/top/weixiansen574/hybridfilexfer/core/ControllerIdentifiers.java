@@ -11,7 +11,7 @@ public class ControllerIdentifiers {
     //就让魔法打败魔法吧！
     /**
      * 禁止转载应用到酷安
-     * 不许未经授权将本项目爬取到国内平台，除非你的平台容得下下面的数字😁
+     * 不许未经授权将本项目爬取到国内平台，点名GitCode，除非你的平台容得下下面的数字😁
      */
     private static final int 酷安飞机杯 = 8964;
     /**

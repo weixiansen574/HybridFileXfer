@@ -27,11 +27,12 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.util.List;
 import java.util.Objects;
 
+import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.Directory;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 import top.weixiansen574.hybridfilexfer.core.callback.TransferFileCallback;
-import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
+import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
 import top.weixiansen574.hybridfilexfer.listadapter.BookmarkAdapter;
 import top.weixiansen574.hybridfilexfer.listadapter.FileSelectAdapter;
 import top.weixiansen574.hybridfilexfer.listadapter.LocalFileSelectAdapter;
@@ -333,10 +334,11 @@ public class TransferActivity extends AppCompatActivity {
         Activity context;
         TransferDialog transferDialog;
         FileSelectAdapter adapter;
-        public TransferDialogHandler(Activity context,boolean isUpload,List<String> channelNames, FileSelectAdapter adapter) {
+
+        public TransferDialogHandler(Activity context, boolean isUpload, List<String> channelNames, FileSelectAdapter adapter) {
             this.context = context;
             this.adapter = adapter;
-            transferDialog = new TransferDialog(context,isUpload, channelNames);
+            transferDialog = new TransferDialog(context, isUpload, channelNames);
             transferDialog.show();
         }
 
@@ -365,7 +367,7 @@ public class TransferActivity extends AppCompatActivity {
         @Override
         public void onChannelComplete(String iName, long traffic, long time) {
             transferDialog.showEvent(iName, String.format("传输完毕！平均速度：%s",
-                    Utils.formatSpeed(traffic / time * 1000)));
+                    time == 0 ? "∞" : Utils.formatSpeed(traffic / time * 1000)));
         }
 
         @Override
@@ -393,7 +395,7 @@ public class TransferActivity extends AppCompatActivity {
             new AlertDialog.Builder(context)
                     .setTitle("读取文件时发生错误")
                     .setMessage(message)
-                    .setPositiveButton(R.string.ok,null)
+                    .setPositiveButton(R.string.ok, null)
                     .show();
         }
 
@@ -402,16 +404,16 @@ public class TransferActivity extends AppCompatActivity {
             transferDialog.setTitle("传输失败");
             transferDialog.setCloseBtnEnable(true);
             new AlertDialog.Builder(context)
-                    .setTitle("将文件写入硬盘时发生错误")
+                    .setTitle("写入文件时发生错误")
                     .setMessage(message)
-                    .setPositiveButton(R.string.ok,null)
+                    .setPositiveButton(R.string.ok, null)
                     .show();
         }
 
         @Override
-        public void onComplete(long traffic, long time) {
+        public void onComplete(boolean isUpload, long traffic, long time) {
             //文件传输完成，平均总速度：
-            transferDialog.complete(traffic, time);
+            transferDialog.complete(isUpload, traffic, time);
             adapter.refresh();
         }
 
@@ -421,6 +423,17 @@ public class TransferActivity extends AppCompatActivity {
             transferDialog.setCloseBtnEnable(true);
             transferDialog.setButton(context.getString(R.string.exit), v -> context.finish());
             context.setResult(MainActivity.RESULT_CODE_SERVER_DISCONNECT);
+        }
+
+        @Override
+        public void onError(Throwable th) {
+            transferDialog.dismiss();
+            new AlertDialog.Builder(context)
+                    .setTitle("发生错误")
+                    .setMessage(th.toString())
+                    .setPositiveButton(R.string.ok, null)
+                    .setOnDismissListener(dialog -> context.finish())
+                    .show();
         }
     }
 

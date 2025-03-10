@@ -3,6 +3,7 @@ package top.weixiansen574.hybridfilexfer.core;
 import java.util.ArrayList;
 import java.util.List;
 
+import top.weixiansen574.hybridfilexfer.core.TransferConnection;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 import top.weixiansen574.hybridfilexfer.core.callback.TransferFileCallback;
 

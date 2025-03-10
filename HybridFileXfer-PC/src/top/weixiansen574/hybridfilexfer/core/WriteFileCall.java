@@ -7,6 +7,8 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
 
+import top.weixiansen574.hybridfilexfer.core.callback.TransferFileCallback;
+
 public abstract class WriteFileCall implements Callable<Void> {
     private final LinkedBlockingDeque<ByteBuffer> buffers;
     private final boolean[] channelFinished;
@@ -64,10 +66,11 @@ public abstract class WriteFileCall implements Callable<Void> {
                 if (cursor != block.getStartPosition()) {
                     cursor = block.getStartPosition();
                     channel.position(cursor);
-                    //logSeek(block);
-                } else {
-                    //logBlock(block);
                 }
+                 /*   logSeek(block);
+                } else {
+                    logBlock(block);
+                }*/
 
                 ByteBuffer data = block.data;
                 data.flip();
@@ -190,31 +193,9 @@ public abstract class WriteFileCall implements Callable<Void> {
         }
     }
 
-
- /*   private void tryMkdirs(String file) throws Exception {
-        if (fileExists(file)) {
-            //如果存在且是一个文件则删除再创建成文件夹
-            if (isFile(file)) {
-                if (deleteFile(file)) {
-                    mkdirs(file);
-                } else {
-                    throw new IOException("cannot delete file " + file);
-                }
-            }
-        } else {
-            if (!mkdirs(file)) {
-                throw new IOException("cannot mkdirs " + file);
-            }
-        }
-    }*/
-
     protected abstract void createParentDirIfNotExists(String path) throws Exception;
     protected abstract void tryMkdirs(String path) throws Exception;
     protected abstract FileChannel createAndOpenFile(String path,long length) throws Exception;
     protected abstract void closeFile(FileChannel channel) throws Exception;
     protected abstract boolean setFileLastModified(String path,long time) throws Exception;
-/*    protected abstract boolean deleteFile(String path) throws Exception;
-    protected abstract boolean mkdirs(String path) throws Exception;
-    protected abstract boolean fileExists(String path) throws Exception;
-    protected abstract boolean isFile(String path) throws Exception;*/
 }

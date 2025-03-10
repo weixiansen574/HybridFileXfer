@@ -7,7 +7,6 @@
     tools:context=".MainActivity">
 
     <androidx.cardview.widget.CardView
-        android:id="@+id/cardView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="8dp">
@@ -24,7 +23,8 @@
 
                 <TextView
                     android:id="@+id/textView2"
-                    android:layout_width="60dp"
+                    android:layout_width="wrap_content"
+                    android:minWidth="60dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="@string/conn"
@@ -34,7 +34,8 @@
 
                 <TextView
                     android:id="@+id/textView"
-                    android:layout_width="60dp"
+                    android:layout_width="wrap_content"
+                    android:minWidth="60dp"
                     android:layout_height="match_parent"
                     android:gravity="center"
                     android:text="@string/mode_"

@@ -1,44 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:keepScreenOn="true">
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical">
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginStart="25dp"
             android:layout_marginTop="15dp"
-            android:layout_marginLeft="25dp"
+            android:text="@string/ben_she_bei_huan_chong_qu_kuai_shu"
             android:textColor="@color/fond"
-            android:textSize="15sp"
-            android:text="本设备缓冲区块数"/>
+            android:textSize="15sp" />
+
         <EditText
             android:id="@+id/edit_local_buffer_count"
-            android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
             android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"/>
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="15dp"
+            android:inputType="number"
+            tools:ignore="Autofill,LabelFor" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="25dp"
+            android:layout_marginStart="25dp"
+            android:text="@string/dui_fang_huan_chong_qu_kuai_shu"
             android:textColor="@color/fond"
-            android:textSize="15sp"
-            android:text="对方缓冲区块数"/>
+            android:textSize="15sp" />
+
         <EditText
             android:id="@+id/edit_remote_buffer_count"
-            android:inputType="number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginLeft="20dp"
-            android:layout_marginRight="20dp"
             android:layout_marginTop="15dp"
-            android:layout_marginBottom="15dp"/>
+            android:layout_marginRight="20dp"
+            android:layout_marginBottom="15dp"
+            android:inputType="number"
+            tools:ignore="Autofill,LabelFor" />
     </LinearLayout>
 </ScrollView>

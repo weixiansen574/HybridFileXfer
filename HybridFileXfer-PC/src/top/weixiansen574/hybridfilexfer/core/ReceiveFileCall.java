@@ -16,7 +16,7 @@ public class ReceiveFileCall implements Callable<Void> {
     private final TransferConnection connection;
     private final String iName;
 
-    public ReceiveFileCall(int tIndex, TransferConnection connection, WriteFileCall writeFileCall, TransferFileCallback callback) {
+    public ReceiveFileCall(int tIndex, TransferConnection connection,WriteFileCall writeFileCall,TransferFileCallback callback) {
         this.writeFileCall = writeFileCall;
         this.tIndex = tIndex;
         this.connection = connection;
@@ -67,26 +67,26 @@ public class ReceiveFileCall implements Callable<Void> {
                         break;
                     }
                     case TransferIdentifiers.EOF:
-                        System.out.println(iName + " 接收完成");
+                        //System.out.println(iName + " 接收完成");
                         writeFileCall.finishChannel(tIndex);
                         callback.onChannelComplete(iName,
                                 connection.getTotalTraffic().downloadTraffic,
                                 System.currentTimeMillis() - startTime);
                         return null;
                     case TransferIdentifiers.END_OF_INTERRUPTED:
-                        System.out.println("传输通道：" + iName + " 已中断，因其他通道断开");
+                        //System.out.println("传输通道：" + iName + " 已中断，因其他通道断开");
                         writeFileCall.cancel();
                         callback.onChannelError(iName,
                                 TransferFileCallback.ERROR_TYPE_INTERRUPT,null);
                         return null;
                     case TransferIdentifiers.END_OF_READ_ERROR:
-                        System.out.println("传输通道：" + iName + " 已取消传输，因为读取文件时发生异常");
+                        //System.out.println("传输通道：" + iName + " 已取消传输，因为读取文件时发生异常");
                         writeFileCall.cancel();
                         callback.onChannelError(iName,
                                 TransferFileCallback.ERROR_TYPE_READ_ERROR,null);
                         return null;
                     case TransferIdentifiers.END_OF_WRITE_ERROR:
-                        System.out.println("传输通道：" + iName + " 已取消传输，因为写入文件时发生异常");
+                        //System.out.println("传输通道：" + iName + " 已取消传输，因为写入文件时发生异常");
                         writeFileCall.cancel();
                         callback.onChannelError(iName,
                                 TransferFileCallback.ERROR_TYPE_WRITE_ERROR,null);

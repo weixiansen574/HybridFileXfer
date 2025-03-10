@@ -21,30 +21,34 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.HybridFileXfer2"
         tools:targetApi="31" >
+        <activity
+            android:name=".ClientActivity"
+            android:exported="false" />
+
         <service
             android:name=".IOService"
             android:enabled="true"
-            android:process=":IOService">
+            android:process=":IOService" >
         </service>
 
-<!--        <provider
+        <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
             android:enabled="true"
             android:exported="true"
             android:multiprocess="false"
-            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />-->
+            android:permission="android.permission.INTERACT_ACROSS_USERS_FULL" />
 
         <activity
             android:name=".TransferActivity"
             android:exported="false"
             android:theme="@style/Theme.HybridFileXfer2.NoActionBar" />
-
-<!--        <service
+        <!--
+        <service
             android:name=".HFXSService"
             android:enabled="true"
-            android:process=":HFXService" />-->
-
+            android:process=":HFXService" />
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true" >

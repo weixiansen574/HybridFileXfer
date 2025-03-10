@@ -1,13 +1,13 @@
 package top.weixiansen574.hybridfilexfer.core;
 
-import top.weixiansen574.hybridfilexfer.core.bean.Directory;
-import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
-
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
+
+import top.weixiansen574.hybridfilexfer.core.bean.Directory;
+import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
 
 public abstract class ReadFileCall implements Callable<Void> {
     public static final FileBlock END_POINT = new FileBlock(true, -1, "END_POINT", 0, 0, -1, null);
@@ -81,6 +81,16 @@ public abstract class ReadFileCall implements Callable<Void> {
         long length = channel.size();
         long lastModified = file.lastModified();
         long remaining = length;
+        if (length == 0){
+            ByteBuffer buffer = buffers.take();
+            buffer.clear();
+            buffer.limit(0);
+            deque.add(new FileBlock(true,
+                    fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
+                    lastModified, length, 0, buffer));
+            closeFile(channel);
+            return;
+        }
         int i = 0;
         while (remaining > 0){
             int blkSize = (int) Math.min(remaining,FileBlock.BLOCK_SIZE);

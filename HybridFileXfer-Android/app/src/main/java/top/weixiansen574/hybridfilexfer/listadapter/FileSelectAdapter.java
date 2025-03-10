@@ -29,10 +29,10 @@ import java.util.LinkedList;
 import java.util.List;
 
 import top.weixiansen574.hybridfilexfer.R;
-import top.weixiansen574.hybridfilexfer.Utils;
+import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.Directory;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
-import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
+import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
 import top.weixiansen574.hybridfilexfer.tasks.DeleteFilesTask;
 import top.weixiansen574.hybridfilexfer.tasks.ListFilesTask;
 
@@ -65,7 +65,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
         this.fileSystem = getFileSystem(server);
 
         layoutInflater = LayoutInflater.from(context);
-        jump(getDefaultDir());
+        jump(getDefaultDir(server));
         fileSelectToolbar.getMenu()
                 .findItem(R.id.select_all)
                 .setOnMenuItemClickListener(item -> {
@@ -100,6 +100,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
                                 cancelSelect();
 
                                 ProgressDialog progressDialog = new ProgressDialog(context);
+                                progressDialog.setCancelable(false);
                                 progressDialog.setProgress(0);
                                 progressDialog.setTitle(context.getString(R.string.shan_chu_zhong__));
                                 progressDialog.setMessage("");
@@ -379,7 +380,7 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
 
     protected abstract void handleListException(Throwable th);
 
-    protected abstract String getDefaultDir();
+    protected abstract String getDefaultDir(HFXServer server);
 
     protected abstract int getFileSystem(HFXServer server);
 
@@ -418,6 +419,9 @@ public abstract class FileSelectAdapter extends RecyclerView.Adapter<FileSelectA
     }
 
     public Directory getCurrentDirectory(){
+        if (positions.isEmpty()){
+            return new Directory("/",fileSystem);
+        }
         return positions.get(positions.size() - 1).dir;
     }
 

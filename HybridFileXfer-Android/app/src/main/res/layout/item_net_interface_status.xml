@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,7 +31,29 @@
                 android:textColor="@color/fond"
                 android:textSize="15sp" />
 
-            <LinearLayout
+            <TextView
+                android:id="@+id/upload_speed"
+                android:layout_width="105sp"
+                android:layout_height="match_parent"
+                android:drawablePadding="2dp"
+                android:gravity="center_vertical"
+                android:text="0B/s"
+                android:textColor="@color/fond"
+                android:textSize="13sp"
+                app:drawableStartCompat="@drawable/baseline_upload_24"/>
+
+
+            <TextView
+                android:id="@+id/download_speed"
+                android:layout_width="105sp"
+                android:layout_height="match_parent"
+                android:drawablePadding="2dp"
+                android:gravity="center_vertical"
+                android:text="0B/s"
+                android:textColor="@color/fond"
+                android:textSize="13sp"
+                app:drawableStartCompat="@drawable/baseline_file_download_24"/>
+           <!-- <LinearLayout
                 android:id="@+id/upload_speed_group"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content">
@@ -71,7 +94,7 @@
                     android:text="0B/s"
                     android:textColor="@color/fond"
                     android:textSize="13sp" />
-            </LinearLayout>
+            </LinearLayout>-->
         </LinearLayout>
 
         <TextView

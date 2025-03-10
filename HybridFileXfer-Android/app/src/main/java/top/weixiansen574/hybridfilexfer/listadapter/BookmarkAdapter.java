@@ -56,16 +56,16 @@ public class BookmarkAdapter extends RecyclerView.Adapter<BookmarkAdapter.MyView
         });
         holder.itemView.setOnLongClickListener(v -> {
             new AlertDialog.Builder(context)
-                    .setTitle("确认删除")
-                    .setMessage("确定要删除书签：" + item.path + " 吗？")
-                    .setNegativeButton("取消", null)
-                    .setPositiveButton("确定", (dialog, which) -> {
+                    .setTitle(R.string.confirm_delete)
+                    .setMessage(context.getString(R.string.delete_the_bookmark,item.path))
+                    .setNegativeButton(R.string.cancel, null)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> {
                         if (onDelete(item)) {
-                            Toast.makeText(context, "删除成功", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, R.string.deleted_successfully, Toast.LENGTH_SHORT).show();
                             bookMarks.remove(item);
                             notifyItemRemoved(holder.getAdapterPosition());
                         } else {
-                            Toast.makeText(context, "删除失败", Toast.LENGTH_SHORT).show();
+                            Toast.makeText(context, R.string.deletion_failed, Toast.LENGTH_SHORT).show();
                         }
                     })
                     .show();

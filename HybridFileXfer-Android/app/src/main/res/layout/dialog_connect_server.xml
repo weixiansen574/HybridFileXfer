@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="40dp">
+
+        <TextView
+            android:id="@+id/textView"
+            android:layout_width="wrap_content"
+            android:minWidth="60dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="13dp"
+            android:gravity="center"
+            android:text="@string/mode_"
+            android:textColor="@color/fond"
+            android:textSize="16sp"
+            app:layout_constraintStart_toEndOf="@+id/textView2" />
+
+        <Spinner
+            android:id="@+id/spinner_mode"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:entries="@array/select_mode"
+            app:layout_constraintStart_toEndOf="@+id/textView" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="15dp"
+        android:text="@string/controller_channel_ip"
+        android:textColor="@color/fond"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/edit_server_controller_ip"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="15dp"
+        android:autofillHints=""
+        android:hint="@string/any_connectable_network_card_ip"
+        android:inputType="text" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="25dp"
+        android:layout_marginTop="15dp"
+        android:text="@string/home_dir"
+        android:textColor="@color/fond"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/edit_home_dir"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginBottom="15dp"
+        android:inputType="text"
+        android:autofillHints="" />
+
+
+</LinearLayout>

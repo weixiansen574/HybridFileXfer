@@ -8,7 +8,6 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.core.content.ContextCompat;
@@ -19,9 +18,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 
+import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 
-//TODO 国际化
 public class TransferDialog {
     public final boolean isUpload;
     private final Map<String, Holder> holderMap;
@@ -40,13 +39,13 @@ public class TransferDialog {
             View itemView = inflater.inflate(R.layout.item_net_interface_status, linearLayout, false);
             //只保留上或下的其中一个速度指示器
             if (isUpload) {
-                itemView.findViewById(R.id.download_speed_group).setVisibility(View.GONE);
+                itemView.findViewById(R.id.download_speed).setVisibility(View.GONE);
             } else {
-                itemView.findViewById(R.id.upload_speed_group).setVisibility(View.GONE);
+                itemView.findViewById(R.id.upload_speed).setVisibility(View.GONE);
             }
             Holder holder = new Holder(itemView);
             holder.channelName.setText(channelName);
-            holder.channelIcon.setImageDrawable(ContextCompat.getDrawable(context, Utils.matchIconIdForIName(channelName)));
+            holder.channelIcon.setImageDrawable(ContextCompat.getDrawable(context, NetCardIcon.matchIdForIName(channelName)));
             holderMap.put(channelName, holder);
             linearLayout.addView(itemView);
         }
@@ -54,12 +53,12 @@ public class TransferDialog {
     }
 
 
-
     public void show() {
         dialog = new AlertDialog.Builder(context)
-                .setTitle(isUpload ? "0.00MB/s · 发送中" : "0.00MB/s · 接收中")
+                .setTitle(isUpload ? context.getString(R.string.uploading_speed_zero) :
+                        context.getString(R.string.downloading_speed_zero))
                 .setView(dialogView)
-                .setPositiveButton("完成", null)
+                .setPositiveButton(R.string.complete, null)
                 .setCancelable(false)
                 .show();
         dialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(false);
@@ -82,25 +81,26 @@ public class TransferDialog {
             }
         }
         if (isUpload) {
-            dialog.setTitle(String.format(Locale.getDefault(), "%.2fMB/s · 发送中",
+            dialog.setTitle(context.getString(R.string.uploading_speed,
                     ((float) totalUploadSpeed) / 1024 / 1024));
         } else {
-            dialog.setTitle(String.format(Locale.getDefault(), "%.2fMB/s · 接收中",
+            dialog.setTitle(context.getString(R.string.downloading_speed,
                     ((float) totalDownloadSpeed) / 1024 / 1024));
         }
     }
 
-    public void complete(long traffic, long time){
+    public void complete(boolean isUpload, long traffic, long time) {
         setCloseBtnEnable(true);
-        dialog.setTitle((isUpload ? "▲ " : "▼ ") + Utils.formatSpeed(traffic / time * 1000) +
-                " · "+Utils.formatTime(time));
+        dialog.setTitle((isUpload ? "▲" : "▼") + Utils.formatSpeed(traffic / time * 1000) +
+                "·" + Utils.formatTime(time) + "·" + Utils.formatFileSize(traffic));
         for (Map.Entry<String, Holder> entry : holderMap.entrySet()) {
             Holder holder = entry.getValue();
             holder.downloadSpeed.setText(Utils.formatSpeed(0));
             holder.uploadSpeed.setText(Utils.formatSpeed(0));
         }
     }
-    public void setTitle(String title){
+
+    public void setTitle(String title) {
         dialog.setTitle(title);
     }
 

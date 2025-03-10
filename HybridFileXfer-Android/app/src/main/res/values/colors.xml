@@ -3,7 +3,6 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="primary">#212121</color>
-    <color name="background">?android:attr/colorBackground</color>
     <color name="blue_background_dark">#1E88E5</color>
     <color name="blue_background_light">#E3F2FD</color>
     <color name="fond">@color/black</color>

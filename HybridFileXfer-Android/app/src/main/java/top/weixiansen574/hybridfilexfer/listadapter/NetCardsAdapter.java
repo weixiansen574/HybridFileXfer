@@ -27,7 +27,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-import top.weixiansen574.hybridfilexfer.Utils;
+import top.weixiansen574.hybridfilexfer.NetCardIcon;
 import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
 import top.weixiansen574.hybridfilexfer.R;
 
@@ -52,11 +52,11 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
         ItemServerNetInterface itemServerNetInterface = netInterfaceList.get(position);
-        holder.txvNameAndState.setText(itemServerNetInterface.name + " | "+itemServerNetInterface.state);
+        holder.txvNameAndState.setText(itemServerNetInterface.name + " | " + itemServerNetInterface.state);
         holder.txvIP.setText(itemServerNetInterface.address.getHostAddress());
         String iName = itemServerNetInterface.name;
         boolean enableBindIpInput = !iName.equals("USB_ADB");
-        holder.imgInterfaceType.setImageDrawable(context.getDrawable(Utils.matchIconIdForIName(iName)));
+        holder.imgInterfaceType.setImageDrawable(context.getDrawable(NetCardIcon.matchIdForIName(iName)));
 
         holder.editClientBindIP.setEnabled(enableModify && enableBindIpInput);
         holder.cbEnable.setEnabled(enableModify);
@@ -93,10 +93,10 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
         return netInterfaceList.size();
     }
 
-    public void changeItemState(String name,String state){
+    public void changeItemState(String name, String state) {
         for (int i = 0; i < netInterfaceList.size(); i++) {
             ItemServerNetInterface item = netInterfaceList.get(i);
-            if (item.name.equals(name)){
+            if (item.name.equals(name)) {
                 item.state = state;
                 notifyItemChanged(i);
             }
@@ -114,11 +114,10 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
     }
 
 
-
     @SuppressLint("NotifyDataSetChanged")
     public void setEnableModify(boolean enableModify) {
         this.enableModify = enableModify;
-        if (enableModify){
+        if (enableModify) {
             for (ItemServerNetInterface item : netInterfaceList) {
                 item.state = context.getString(R.string.not_run);
             }
@@ -134,7 +133,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
                     serverNetInterfaceList.add(netInterface.toServerNetInterface());
                 } catch (Exception e) {
                     e.printStackTrace();
-                    Toast.makeText(context, context.getString(R.string.Invalid_ip) + netInterface.clientBindAddress, Toast.LENGTH_SHORT).show();
+                    Toast.makeText(context, context.getString(R.string.invalid_ip) + netInterface.clientBindAddress, Toast.LENGTH_SHORT).show();
                     return null;
                 }
             }
@@ -174,7 +173,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
         String clientBindAddress = "";
         String state;
 
-        public ItemServerNetInterface(String name, InetAddress address,String state) {
+        public ItemServerNetInterface(String name, InetAddress address, String state) {
             this.name = name;
             this.state = state;
             this.address = address;
@@ -188,7 +187,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
 
     private ArrayList<ItemServerNetInterface> getNetInterfaces() throws SocketException, UnknownHostException {
         ArrayList<ItemServerNetInterface> netInterfaceList = new ArrayList<>();
-        netInterfaceList.add(new ItemServerNetInterface("USB_ADB", InetAddress.getByName("127.0.0.1"),context.getString(R.string.not_run)));
+        netInterfaceList.add(new ItemServerNetInterface("USB_ADB", InetAddress.getByName("127.0.0.1"), context.getString(R.string.not_run)));
         Enumeration<NetworkInterface> networkInterfaces = NetworkInterface.getNetworkInterfaces();
         while (networkInterfaces.hasMoreElements()) {
             NetworkInterface networkInterface = networkInterfaces.nextElement();
@@ -200,7 +199,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
                         && !networkInterface.getDisplayName().startsWith("rmnet_data"/*数据流量除外*/)) {
                     ItemServerNetInterface item = new ItemServerNetInterface(networkInterface.getDisplayName(), address, context.getString(R.string.not_run));
                     //VPN开的虚拟网卡，默认不勾选
-                    if (item.name.startsWith("tun")){
+                    if (item.name.startsWith("tun")) {
                         item.enable = false;
                     }
                     netInterfaceList.add(item);
@@ -210,6 +209,5 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
         }
         return netInterfaceList;
     }
-
 
 }

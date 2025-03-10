@@ -47,4 +47,20 @@ public class Config {
     public void setRemoteBufferCount(int count){
         preferences.edit().putInt("remote_buffer_count",count).apply();
     }
+
+    public void setClientIOMode(int mode){
+        preferences.edit().putInt("client_io_mode",mode).apply();
+    }
+
+    public int getClientIOMode(){
+        return preferences.getInt("client_io_mode", MODE_NORMAL);
+    }
+
+    public void setConnectServerControllerIp(String ip){
+        preferences.edit().putString("connect_server_controller_ip",ip).apply();
+    }
+
+    public String getConnectServerControllerIp(){
+        return preferences.getString("connect_server_controller_ip","");
+    }
 }

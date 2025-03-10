@@ -6,6 +6,7 @@ import android.app.AlertDialog;
 import android.app.Service;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
@@ -15,6 +16,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.IBinder;
 import android.provider.Settings;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -36,15 +38,14 @@ import java.io.IOException;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.List;
-import java.util.Locale;
 
 import rikka.shizuku.Shizuku;
-import rikka.sui.Sui;
 import top.weixiansen574.async.BackstageTask;
 import top.weixiansen574.hybridfilexfer.aidl.IIOService;
 import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
-import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
-import top.weixiansen574.hybridfilexfer.droidserver.callback.StartServerCallback;
+import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
+import top.weixiansen574.hybridfilexfer.droidcore.StartServerTask;
+import top.weixiansen574.hybridfilexfer.droidcore.callback.StartServerCallback;
 import top.weixiansen574.hybridfilexfer.listadapter.NetCardsAdapter;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceConnection {
@@ -56,8 +57,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button startServerBtn;
     Button toTransfer;
     Context context;
-    private boolean isRoot = false;
-    //private boolean state = true;
+    private boolean isShizuku = false;
     private HFXServer server;
     private Config config;
 
@@ -100,7 +100,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
-
     }
 
     @Override
@@ -128,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void startServer() {
-        if (!checkPermissionOrRequest()) {
+        if (checkPermissionOrRequest()) {
             Toast.makeText(context, R.string.xu_yao_wen_jian_du_xie_quan_xian, Toast.LENGTH_LONG).show();
             return;
         }
@@ -141,25 +140,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
         long availableMemoryMB = getAvailableMemoryMB();
-        if (config.getLocalBufferCount() > availableMemoryMB){
-            Toast.makeText(context, "手机可用内存不足，请调小本机缓冲区块大小或清理后台", Toast.LENGTH_SHORT).show();
+        if (config.getLocalBufferCount() > availableMemoryMB) {
+            Toast.makeText(context, R.string.shou_ji_ke_yong_nei_cun_bu_zu, Toast.LENGTH_SHORT).show();
             return;
         }
 
         if (spinnerMode.getSelectedItemPosition() == 0) {
-            isRoot = false;
+            isShizuku = false;
         } else {
-            if (!Sui.init(getPackageName())){
-                showInstallSuiDialog(context);
+            if (checkShizukuOrReq(spinnerMode.getSelectedItemPosition())) {
                 return;
-            } else {
-                if (Shizuku.checkSelfPermission() != 0) {
-                    Toast.makeText(context, R.string.wei_shou_quan_sui_ti_shi, Toast.LENGTH_SHORT).show();
-                    Shizuku.requestPermission(1);
-                    return;
-                }
             }
-            isRoot = true;
+            isShizuku = true;
         }
         bindAndStartService();
     }
@@ -168,7 +160,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         netCardsAdapter.setEnableModify(false);
         startServerBtn.setEnabled(false);
         startServerBtn.setText(R.string.ting_zhi_fu_wu);
-        if (isRoot) {
+        if (isShizuku) {
             Shizuku.bindUserService(IOService.getUserServiceArgs(context), this);
         } else {
             Intent intent = new Intent(context, IOService.class);
@@ -177,7 +169,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void unbindService() {
-        if (isRoot) {
+        if (isShizuku) {
             Shizuku.unbindUserService(IOService.getUserServiceArgs(context), this, true);
         } else {
             unbindService(this);
@@ -191,7 +183,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         StartServerCallback callback = new StartServerCallback() {
             @Override
             public void onBindFailed(int port) {
-                Toast.makeText(context, getString(R.string.service_start_failed,port), Toast.LENGTH_SHORT).show();
+                Toast.makeText(context, getString(R.string.service_start_failed, port), Toast.LENGTH_SHORT).show();
                 netCardsAdapter.setEnableModify(true);
                 startServerBtn.setEnabled(true);
                 startServerBtn.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
@@ -203,31 +195,30 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startServerBtn.setEnabled(true);
                 Toast.makeText(context, R.string.fu_wu_yi_qi_dong, Toast.LENGTH_SHORT).show();
                 for (ServerNetInterface selectedInterface : netCardsAdapter.getSelectedInterfaces()) {
-                    netCardsAdapter.changeItemState(selectedInterface.name,getString(R.string.deng_dai_lian_jie));
+                    netCardsAdapter.changeItemState(selectedInterface.name, getString(R.string.deng_dai_lian_jie));
                 }
             }
 
             @Override
             public void onAccepted(String name) {
-                netCardsAdapter.changeItemState(name,getString(R.string.yi_lian_jie));
+                netCardsAdapter.changeItemState(name, getString(R.string.yi_lian_jie));
             }
 
             @Override
             public void onAcceptFailed(String name) {
-                netCardsAdapter.changeItemState(name,getString(R.string.lian_jie_shi_bai));
+                netCardsAdapter.changeItemState(name, getString(R.string.lian_jie_shi_bai));
             }
 
             @Override
             public void onPcOOM() {
-                Toast.makeText(context, "电脑端内存不足创建缓冲区块失败，请看控制台信息", Toast.LENGTH_LONG).show();
+                Toast.makeText(context, R.string.dui_fang_nei_cun_bu_zu, Toast.LENGTH_LONG).show();
                 changeToStartState();
             }
 
             @Override
             public void onMeOOM(int created, int localBufferCount) {
-                Toast.makeText(context, String.format(Locale.getDefault(),
-                        "缓冲区块创建失败，已创建[%dMB/%dMB]，请尝试调小缓冲区块数或清理后台",
-                        created,localBufferCount), Toast.LENGTH_LONG).show();
+                Toast.makeText(context, getString(R.string.buffer_block_creation_failed_toast,
+                        created, localBufferCount), Toast.LENGTH_LONG).show();
                 changeToStartState();
             }
 
@@ -237,7 +228,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 //设置静态实例，使得传输Activity能使用
                 HFXServer.instance = server;
                 //TODO 国际化
-                startServerBtn.setText("断开连接");
+                startServerBtn.setText(R.string.duan_kai_lian_jie);
             }
 
             @Override
@@ -246,8 +237,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 changeToStartState();
             }
         };
-        server.startServer(config.getServerPort(),netCardsAdapter.getSelectedInterfaces(),
-                config.getLocalBufferCount(),config.getRemoteBufferCount(), callback);
+        new StartServerTask(callback,server,config.getServerPort(), netCardsAdapter.getSelectedInterfaces(),
+                config.getLocalBufferCount(), config.getRemoteBufferCount()).execute();
     }
 
     @Override
@@ -255,32 +246,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         System.out.println("onServiceDisconnected");
     }
 
-
     private boolean checkPermissionOrRequest() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             // 检查是否有所有文件访问权限
             if (Environment.isExternalStorageManager()) {
                 // 已经获得文件访问权限
-                return true;
+                return false;
             } else {
                 // 请求文件访问权限
                 Intent intent = new Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
                 //添加包名，不然要在设置中翻列表
                 intent.setData(Uri.parse("package:" + context.getPackageName()));
                 startActivityForResult(intent, REQUEST_CODE_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                return false;
+                return true;
             }
         } else {
             // 检查是否有存储权限
             if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED) {
                 // 已经获得存储权限
-                return true;
+                return false;
             } else {
                 // 请求存储权限
                 ActivityCompat.requestPermissions(this, new String[]{
                         android.Manifest.permission.WRITE_EXTERNAL_STORAGE,
                         Manifest.permission.READ_EXTERNAL_STORAGE}, 0);
-                return false;
+                return true;
             }
         }
     }
@@ -289,7 +279,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode == REQUEST_CODE_TRANSFER) {
-            if (resultCode == RESULT_CODE_SERVER_DISCONNECT){
+            if (resultCode == RESULT_CODE_SERVER_DISCONNECT) {
                 disconnect(false);
             }
         }
@@ -314,16 +304,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             intent.setData(Uri.parse("https://github.com/weixiansen574/HybridFileXfer/releases"));
             startActivity(intent);
             return true;
-        } else if (itemId == R.id.buffer_count){
+        } else if (itemId == R.id.buffer_count) {
             View view = View.inflate(context, R.layout.dialog_buffer_settings, null);
             EditText editLocalCount = view.findViewById(R.id.edit_local_buffer_count);
             EditText editRemoteCount = view.findViewById(R.id.edit_remote_buffer_count);
             editLocalCount.setText(String.valueOf(config.getLocalBufferCount()));
             editRemoteCount.setText(String.valueOf(config.getRemoteBufferCount()));
-            editLocalCount.setHint("当前最高可设置：" + getAvailableMemoryMB());
+            editLocalCount.setHint(getString(R.string.dang_qian_zui_gao_ke_she_zhi,getAvailableMemoryMB()));
 
             AlertDialog dialog = new AlertDialog.Builder(context)
-                    .setTitle("设置缓冲区块数（1MB每块）")
+                    .setTitle(R.string.she_zhi_huan_chong_qu_kuai_shu)
                     .setView(view)
                     .setNegativeButton(R.string.cancel, null)
                     .setPositiveButton(R.string.ok, null)
@@ -341,11 +331,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     // 校验是否为空
                     if (localCountStr.isEmpty()) {
-                        editLocalCount.setError("缓冲区块数不能为空");
+                        editLocalCount.setError(getString(R.string.huan_chong_qu_kuai_shu_bu_neng_wei_kong));
                         return;
                     }
                     if (remoteCountStr.isEmpty()) {
-                        editRemoteCount.setError("缓冲区块数不能为空");
+                        editRemoteCount.setError(getString(R.string.huan_chong_qu_kuai_shu_bu_neng_wei_kong));
                         return;
                     }
 
@@ -354,11 +344,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     // 校验是否大于 16
                     if (localCount <= 16) {
-                        editLocalCount.setError("最小可设置 16");
+                        editLocalCount.setError(getString(R.string.zui_xiao_ke_she_zhi_16));
                         return;
                     }
                     if (remoteCount <= 16) {
-                        editRemoteCount.setError("最小可设置 16");
+                        editRemoteCount.setError(getString(R.string.zui_xiao_ke_she_zhi_16));
                         return;
                     }
 
@@ -369,17 +359,111 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             });
 
             dialog.show();
+        } else if (itemId == R.id.client) {
+            startClient();
         }
 
         return super.onOptionsItemSelected(item);
     }
 
-    public void showInstallSuiDialog(Context context) {
+    private void startClient() {
+        //客户端一样要申请存储权限
+        if (checkPermissionOrRequest()) {
+            return;
+        }
+        View view = View.inflate(context, R.layout.dialog_connect_server, null);
+        EditText editIp = view.findViewById(R.id.edit_server_controller_ip);
+        editIp.setText(config.getConnectServerControllerIp());
+        EditText editMainDir = view.findViewById(R.id.edit_home_dir);
+        editMainDir.setText(Environment.getExternalStorageDirectory().getAbsolutePath());
+        Spinner spinner = view.findViewById(R.id.spinner_mode);
+        spinner.setSelection(config.getClientIOMode());
+        AlertDialog dialog = new AlertDialog.Builder(context)
+                .setView(view)
+                .setTitle(R.string.connect_to_server)
+                .setNegativeButton(R.string.cancel, null)
+                .setPositiveButton(R.string.ok, null)
+                .show();
+
+        dialog.getButton(DialogInterface.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String ip = editIp.getText().toString();
+            if (TextUtils.isEmpty(ip)) {
+                editIp.setError(getString(R.string.please_enter_the_server_ip));
+                return;
+            }
+            if (TextUtils.isEmpty(editMainDir.getText())) {
+                editMainDir.setError(getString(R.string.please_enter_the_home_dir));
+                return;
+            }
+            int mode = spinner.getSelectedItemPosition();
+            if (mode != 0) {
+                if (checkShizukuOrReq(mode)) {
+                    return;
+                }
+            }
+            config.setConnectServerControllerIp(ip);
+            config.setClientIOMode(mode);
+            Intent intent = new Intent(context, ClientActivity.class);
+            intent.putExtra("io_mode", spinner.getSelectedItemPosition());
+            intent.putExtra("controller_ip", ip);
+            intent.putExtra("home_dir", editMainDir.getText().toString());
+            startActivity(intent);
+            dialog.dismiss();
+        });
+    }
+
+    public boolean checkShizukuOrReq(int mode) {
+        if (!Shizuku.pingBinder()) {
+            showInstallShizukuDialog(context);
+            return true;
+        } else {
+            if (Shizuku.checkSelfPermission() != 0) {
+                Toast.makeText(context, R.string.wei_shou_quan_sui_ti_shi, Toast.LENGTH_SHORT).show();
+                Shizuku.requestPermission(1);
+                return true;
+            }
+        }
+        System.out.println("Shizuku UID:" + Shizuku.getUid());
+        if (mode == 1) {
+            if (Shizuku.getUid() != 0) {
+                new AlertDialog.Builder(context)
+                        .setTitle(R.string.shizuku_startup_method_are_inconsistent_title)
+                        .setMessage(R.string.shizuku_startup_method_are_inconsistent_message_root)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                return true;
+            }
+        } else if (mode == 2) {
+            if (Shizuku.getUid() != 2000) {
+                new AlertDialog.Builder(context)
+                        .setTitle(R.string.shizuku_startup_method_are_inconsistent_title)
+                        .setMessage(R.string.shizuku_startup_method_are_inconsistent_message_adb)
+                        .setPositiveButton(R.string.ok, null)
+                        .show();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void showInstallShizukuDialog(Context context) {
         // 创建对话框
         new AlertDialog.Builder(context)
-                .setTitle(R.string.wei_an_zhuang_sui_mo_kuai)
-                .setMessage(R.string.install_sui_hint)
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
+                .setTitle(R.string.shizuku_not_running)
+                .setMessage(R.string.shizuku_not_running_message)
+                .setPositiveButton(R.string.open_shizuku, (dialog, which) -> {
+                    try {
+                        ComponentName componentName = new ComponentName("moe.shizuku.privileged.api", "moe.shizuku.starter.MainActivity");
+                        Intent intent = new Intent();
+                        intent.setComponent(componentName);
+                        context.startActivity(intent);
+                    } catch (Exception e) {
+                        Toast.makeText(context, R.string.please_install_shizuku, Toast.LENGTH_SHORT).show();
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/"));
+                        context.startActivity(intent);
+                    }
+                })
+                .setNeutralButton(R.string.install_sui, (dialog, which) -> {
                     // 打开指定链接
                     Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/RikkaApps/Sui/releases"));
                     context.startActivity(intent);
@@ -388,7 +472,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .show();
     }
 
-    private void changeToStartState(){
+    private void changeToStartState() {
         netCardsAdapter.setEnableModify(true);
         startServerBtn.setEnabled(true);
         startServerBtn.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
@@ -396,15 +480,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         unbindService();
     }
 
-    private void disconnect(boolean toast){
+    private void disconnect(boolean toast) {
         startServerBtn.setEnabled(false);
-        if (HFXServer.instance == null){
+        if (HFXServer.instance == null) {
             server.closeServerSocket();
         } else {
             server.disconnect(new BackstageTask.BaseEventHandler() {
                 @Override
                 public void onComplete() {
-                    if (toast){
+                    if (toast) {
                         Toast.makeText(context, R.string.fu_wu_yi_guan_bi, Toast.LENGTH_SHORT).show();
                     }
                     unbindService();
@@ -419,7 +503,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
     }
 
-    private long getAvailableMemoryMB(){
+    private long getAvailableMemoryMB() {
         ActivityManager activityManager = context.getSystemService(ActivityManager.class);
         ActivityManager.MemoryInfo memoryInfo = new ActivityManager.MemoryInfo();
         activityManager.getMemoryInfo(memoryInfo);
@@ -436,8 +520,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     @Override
     protected void onDestroy() {
-        if (HFXServer.instance != null){
-            HFXServer.instance.disconnect(new BackstageTask.BaseEventHandler() {});
+        if (HFXServer.instance != null) {
+            HFXServer.instance.disconnect(new BackstageTask.BaseEventHandler() {
+            });
         }
         super.onDestroy();
     }

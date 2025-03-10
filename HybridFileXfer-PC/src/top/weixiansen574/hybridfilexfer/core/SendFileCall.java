@@ -1,9 +1,9 @@
 package top.weixiansen574.hybridfilexfer.core;
 
+import java.util.concurrent.Callable;
+
 import top.weixiansen574.hybridfilexfer.core.callback.TransferFileCallback;
 import top.weixiansen574.nio.DataByteChannel;
-
-import java.util.concurrent.Callable;
 
 public class SendFileCall implements Callable<Void> {
     private final ReadFileCall readFileCall;

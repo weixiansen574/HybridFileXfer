@@ -62,7 +62,6 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ProgressBar
-                android:id="@+id/progressBar"
                 style="@style/Widget.AppCompat.ProgressBar.Horizontal"
                 android:indeterminate="true"
                 android:layout_width="120dp"
@@ -75,7 +74,6 @@
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <FrameLayout
-            android:id="@+id/frameLayout"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
@@ -95,7 +93,6 @@
             android:layout_height="match_parent">
 
             <View
-                android:id="@+id/view"
                 android:layout_width="5dp"
                 android:layout_height="match_parent"
                 android:background="@drawable/shadow_right"
@@ -104,7 +101,6 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <View
-                android:id="@+id/view2"
                 android:layout_width="match_parent"
                 android:layout_height="5dp"
                 android:background="@drawable/shadow_bottom"
@@ -179,7 +175,6 @@
             android:layout_height="match_parent">
 
             <View
-                android:id="@+id/view4"
                 android:layout_width="5dp"
                 android:layout_height="match_parent"
                 android:background="@drawable/shadow_left"
@@ -188,7 +183,6 @@
                 app:layout_constraintTop_toTopOf="parent" />
 
             <View
-                android:id="@+id/view5"
                 android:layout_width="match_parent"
                 android:layout_height="5dp"
                 android:background="@drawable/shadow_bottom"

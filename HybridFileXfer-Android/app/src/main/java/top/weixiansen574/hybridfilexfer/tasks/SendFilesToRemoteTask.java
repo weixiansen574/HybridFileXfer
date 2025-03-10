@@ -5,7 +5,7 @@ import java.util.List;
 import top.weixiansen574.async.BackstageTask;
 import top.weixiansen574.hybridfilexfer.core.bean.Directory;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
-import top.weixiansen574.hybridfilexfer.droidserver.HFXServer;
+import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
 
 public class SendFilesToRemoteTask extends BackstageTask<BTransferFileCallback> {
     private final HFXServer server;
