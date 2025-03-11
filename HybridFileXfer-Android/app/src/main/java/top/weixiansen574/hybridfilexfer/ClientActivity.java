@@ -36,7 +36,6 @@ import top.weixiansen574.hybridfilexfer.droidcore.DroidHFXClient;
 import top.weixiansen574.hybridfilexfer.tasks.ClientTask;
 import top.weixiansen574.hybridfilexfer.tasks.ConnectServerTask;
 
-//TODO 国际化
 public class ClientActivity extends AppCompatActivity implements ServiceConnection {
     Activity context;
     boolean isShizuku = false;

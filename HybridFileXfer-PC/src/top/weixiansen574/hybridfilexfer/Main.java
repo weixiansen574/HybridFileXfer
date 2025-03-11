@@ -147,7 +147,7 @@ public class Main {
         Map<String, String> paramMap = new HashMap<>();
         parseArguments(paramMap, args);
         String connect = paramMap.get("-c");
-        String homeDir = paramMap.get("-home_dir");
+        String homeDir = paramMap.get("-d");
         if (homeDir == null) {
             homeDir = "/";
         }

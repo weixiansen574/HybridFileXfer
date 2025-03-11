@@ -7,12 +7,12 @@ import java.io.IOException;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class JdkWriteFileCall extends WriteFileCall {
-    private final Map<FileChannel, RandomAccessFile> map = new HashMap<>();
+    private RandomAccessFile file;
+    private FileChannel channel;
+
     public JdkWriteFileCall(LinkedBlockingDeque<ByteBuffer> buffers, int dequeCount) {
         super(buffers, dequeCount);
     }
@@ -22,7 +22,7 @@ public class JdkWriteFileCall extends WriteFileCall {
         File file = new File(path);
         File parentFile = file.getParentFile();
         //如果就是根目录的情况
-        if (parentFile == null){
+        if (parentFile == null) {
             return;
         }
         mkdirOrThrow(parentFile);
@@ -35,20 +35,16 @@ public class JdkWriteFileCall extends WriteFileCall {
 
     @Override
     protected FileChannel createAndOpenFile(String path, long length) throws Exception {
-        RandomAccessFile raf = new RandomAccessFile(path,"rw");
-        raf.setLength(length);
-        FileChannel channel = raf.getChannel();
-        map.put(channel,raf);
+        file = new RandomAccessFile(path, "rw");
+        file.setLength(length);
+        channel = file.getChannel();
         return channel;
     }
 
     @Override
-    protected void closeFile(FileChannel channel) throws Exception {
-        RandomAccessFile file = map.get(channel);
+    protected void closeFile() throws Exception {
         channel.close();
-        if (file != null){
-            file.close();
-        }
+        file.close();
     }
 
     @Override

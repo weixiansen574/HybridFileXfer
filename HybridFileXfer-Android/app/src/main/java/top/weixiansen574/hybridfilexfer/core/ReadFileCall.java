@@ -88,7 +88,7 @@ public abstract class ReadFileCall implements Callable<Void> {
             deque.add(new FileBlock(true,
                     fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
                     lastModified, length, 0, buffer));
-            closeFile(channel);
+            closeFile();
             return;
         }
         int i = 0;
@@ -106,7 +106,7 @@ public abstract class ReadFileCall implements Callable<Void> {
             remaining -= blkSize;
             i++;
         }
-        closeFile(channel);
+        closeFile();
     }
 
     public void recycleBuffer(ByteBuffer buffer) {
@@ -147,6 +147,6 @@ public abstract class ReadFileCall implements Callable<Void> {
 
     protected abstract FileChannel openFile(String path) throws Exception;
 
-    protected abstract void closeFile(FileChannel channel) throws Exception;
+    protected abstract void closeFile() throws Exception;
 
 }

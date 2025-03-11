@@ -50,7 +50,7 @@ public abstract class WriteFileCall implements Callable<Void> {
                 //如果上个文件与当前
                 if (lastBlock == null || !lastBlock.path.equals(block.path)) {
                     if (lastChannel != null) {
-                        closeFile(lastChannel);
+                        closeFile();
                         setLastModified(lastBlock.path, lastBlock.lastModified);
                     }
                     /*raf = new RandomAccessFile(file, "rw");
@@ -85,7 +85,7 @@ public abstract class WriteFileCall implements Callable<Void> {
                 block = takeBlock();
             }
             if (lastBlock != null) {
-                closeFile(lastChannel);
+                closeFile();
                 setLastModified(lastBlock.path, lastBlock.lastModified);
             }
         } catch (IOException e){
@@ -196,6 +196,6 @@ public abstract class WriteFileCall implements Callable<Void> {
     protected abstract void createParentDirIfNotExists(String path) throws Exception;
     protected abstract void tryMkdirs(String path) throws Exception;
     protected abstract FileChannel createAndOpenFile(String path,long length) throws Exception;
-    protected abstract void closeFile(FileChannel channel) throws Exception;
+    protected abstract void closeFile() throws Exception;
     protected abstract boolean setFileLastModified(String path,long time) throws Exception;
 }
