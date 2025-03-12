@@ -1,0 +1,1 @@
+adb shell am start -n top.weixiansen574.hybridfilexfer/.MainActivity
