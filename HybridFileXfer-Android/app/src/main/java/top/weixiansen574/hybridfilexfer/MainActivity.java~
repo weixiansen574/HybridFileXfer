@@ -304,15 +304,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             intent.setData(Uri.parse("https://github.com/weixiansen574/HybridFileXfer/releases"));
             startActivity(intent);
             return true;
-        } else if (itemId == R.id.open_wifi_p2p_settings) {
-            try {
-                Intent intent = new Intent();
-                intent.setClassName("com.android.settings", "com.android.settings.Settings$WifiP2pSettingsActivity");
-                startActivity(intent);
-            } catch (android.content.ActivityNotFoundException e) {
-                Toast.makeText(context, e.getMessage(), Toast.LENGTH_SHORT).show();
-            }
-            return true;
         } else if (itemId == R.id.buffer_count) {
             View view = View.inflate(context, R.layout.dialog_buffer_settings, null);
             EditText editLocalCount = view.findViewById(R.id.edit_local_buffer_count);
