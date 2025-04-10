@@ -247,3 +247,7 @@ v1.2.0新增书签功能。
 
 PR列表个人头像表达含义属于他们的自由。与本项目主无关！
 
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=weixiansen574/HybridFileXfer&type=Date)](https://www.star-history.com/#weixiansen574/HybridFileXfer&Date)
+
