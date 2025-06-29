@@ -1,0 +1,131 @@
+name: 'Build'
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - '**'
+    tags:
+      - '**'
+  pull_request:
+  merge_group:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          repository: '${{ github.repository }}'
+          ref: '${{ github.ref }}'
+          submodules: 'recursive'
+          fetch-depth: 0
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+      - name: 'Setup Gradle'
+        uses: gradle/actions/setup-gradle@v4
+      - name: 'Setup Android SDK'
+        uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
+          packages: 'tools platform-tools cmake;3.10.2.4988404'
+
+      - name: 'Build with Gradle'
+        working-directory: 'HybridFileXfer-Android'
+        run: |
+          sudo chmod -R -- 0755 .
+          sudo "$(command -v bash || command -v sh)" -- ./gradlew build
+
+      - name: 'Upload release apk'
+        if: '${{ success() }}'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'release-apk'
+          path: '**/build/outputs/apk/release'
+          compression-level: 9
+          include-hidden-files: true
+      - name: 'Upload debug apk'
+        if: '${{ success() }}'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'debug-apk'
+          path: '**/build/outputs/apk/debug'
+          compression-level: 9
+          include-hidden-files: true
+      - name: 'Upload mapping files'
+        if: '${{ success() }}'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'mappings'
+          path: '**/build/outputs/mapping'
+          compression-level: 9
+          include-hidden-files: true
+
+      - name: '[DEBUG] 安装依赖命令'
+        if: '${{ ! cancelled() }}'
+        shell: bash
+        run: |
+          sudo apt-get install -y jq
+          sudo apt-get install -y tar
+      - name: '[DEBUG] 打印环境信息'
+        if: '${{ ! cancelled() }}'
+        env:
+          debug_context_github: '${{ toJson(github) }}'
+          debug_context_env: '${{ toJson(env) }}'
+          debug_context_vars: '${{ toJson(vars) }}'
+          debug_context_job: '${{ toJson(job) }}'
+          debug_context_steps: '${{ toJson(steps) }}'
+          debug_context_runner: '${{ toJson(runner) }}'
+          debug_context_secrets: '${{ toJson(secrets) }}'
+          debug_context_strategy: '${{ toJson(strategy) }}'
+          debug_context_matrix: '${{ toJson(matrix) }}'
+          debug_context_needs: '${{ toJson(needs) }}'
+          debug_context_inputs: '${{ toJson(inputs) }}'
+        shell: bash
+        run: |
+          eval "uname -a; id; sudo id; set"
+          (
+            printf %s '{'
+            printf '"%s":%s' github "${debug_context_github:-"{}"},"
+            printf '"%s":%s' env "${debug_context_env:-"{}"},"
+            printf '"%s":%s' vars "${debug_context_vars:-"{}"},"
+            printf '"%s":%s' job "${debug_context_job:-"{}"},"
+            printf '"%s":%s' steps "${debug_context_steps:-"{}"},"
+            printf '"%s":%s' runner "${debug_context_runner:-"{}"},"
+            printf '"%s":%s' secrets "${debug_context_secrets:-"{}"},"
+            printf '"%s":%s' strategy "${debug_context_strategy:-"{}"},"
+            printf '"%s":%s' matrix "${debug_context_matrix:-"{}"},"
+            printf '"%s":%s' needs "${debug_context_needs:-"{}"},"
+            printf '"%s":%s' inputs "${debug_context_inputs:-"{}"}"
+            printf %s '}'
+          ) | jq -M -S --indent 3
+      - name: '[DEBUG] 打包构建目录'
+        if: '${{ ! cancelled() }}'
+        shell: bash
+        run: |
+          eval "set -x"
+          name="build-caches-${GITHUB_REPOSITORY_OWNER_ID}-${GITHUB_REPOSITORY_ID}-${GITHUB_SHA}" && path="${RUNNER_TEMP}" && base="${path}/${name}"
+          if sudo tar -v -h -c -f "${base}.tar" -- "${RUNNER_WORKSPACE}" 1>/dev/null || tar -v -t -f "${base}.tar" 1>/dev/null; then
+            if sudo "$(command -v bash || command -v sh)" -c 'cat -- "${1}.tar" | gzip -c -9 1>"${1}.tgz"' - "${base}"; then
+              path="${base}.tgz" && du -c -h -s -- "${path}"
+            else
+              exit "${?}"
+            fi
+          else
+            exit "${?}"
+          fi
+          printf '%s=%s\n' artifact_buildCachesName "${name}" 1>>"${GITHUB_ENV}"
+          printf '%s=%s\n' artifact_buildCachesPath "${path}" 1>>"${GITHUB_ENV}"
+      - name: '[DEBUG] 上传打包附件'
+        if: '${{ ! cancelled() }}'
+        uses: 'actions/upload-artifact@v4'
+        with:
+          name: '${{ env.artifact_buildCachesName }}'
+          path: '${{ env.artifact_buildCachesPath }}'
+          compression-level: 0
+          include-hidden-files: true

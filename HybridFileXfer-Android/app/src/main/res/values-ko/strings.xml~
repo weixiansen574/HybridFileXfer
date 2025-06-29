@@ -64,7 +64,6 @@
     <string name="options">옵션</string>
     <string name="github_home_page">GitHub 홈페이지</string>
     <string name="get_update">업데이트 받기</string>
-    <string name="open_wifi_p2p_settings">Wi-Fi Direct P2P</string>
     <string name="delete">삭제</string>
     <string name="select_all">전체 선택</string>
     <string name="bookmark_list">북마크 목록</string>

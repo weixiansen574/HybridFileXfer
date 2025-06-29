@@ -16,10 +16,6 @@
                 android:icon="@drawable/baseline_update_24"
                 android:title="@string/get_update" />
             <item
-                android:id="@+id/open_wifi_p2p_settings"
-                android:icon="@drawable/baseline_more_vert_24"
-                android:title="@string/open_wifi_p2p_settings" />
-            <item
                 android:id="@+id/buffer_count"
                 android:icon="@drawable/baseline_grid_view_24"
                 android:title="@string/huan_chong_qu_she_zhi" />

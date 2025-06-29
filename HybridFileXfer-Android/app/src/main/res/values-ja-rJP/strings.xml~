@@ -65,7 +65,6 @@
     <string name="options">オプション</string>
     <string name="github_home_page">GitHubホームページ</string>
     <string name="get_update">更新を取得</string>
-    <string name="open_wifi_p2p_settings">Wi-Fi Direct P2P</string>
     <string name="delete">削除</string>
     <string name="select_all">すべて選択</string>
     <string name="bookmark_list">ブックマークリスト</string>
