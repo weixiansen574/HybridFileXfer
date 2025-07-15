@@ -159,7 +159,7 @@ public class Main {
 
         // 打印帮助
         if (paramMap.containsKey("-h") || paramMap.isEmpty()) {
-            Strings.printf("help_page");
+            Strings.printf("help_pages");
             return;
         }
 
