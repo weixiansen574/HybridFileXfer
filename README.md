@@ -72,14 +72,14 @@ Usage: HybirdFileXfer [OPTION]...
 
 Mandatory arguments:
 	-c, --connect=ADDRESS	指定连接方式:
-							adb      = 使用 ADB 连接
-							IP_ADDR  = 使用网络直连 (如 192.168.1.114)
-	-s, --device=ID			指定 USB 设备 ID
-	-d, --dir=DIRECTORY		设置电脑接收目录 (默认: /)
+				adb      = 使用 ADB 连接
+				IP_ADDR  = 使用网络直连 (如 192.168.1.114)
+	-s, --device=ID		指定 USB 设备 ID
+	-d, --dir=DIRECTORY	设置电脑接收目录 (默认: /)
 
 Other options:
-	-h, --help				显示此帮助信息
-	-v, --version			显示版本信息
+	-h, --help		显示此帮助信息
+	-v, --version		显示版本信息
 
 Examples:
 	HybirdFileXfer -c adb
