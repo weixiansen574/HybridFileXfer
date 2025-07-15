@@ -158,8 +158,8 @@ public class Main {
         }
 
         // 打印帮助
-        if (paramMap.containsKey("-h")) {
-            Strings.printf("man_page");
+        if (paramMap.containsKey("-h") || paramMap.isEmpty()) {
+            Strings.printf("help_page");
             return;
         }
 
@@ -173,7 +173,7 @@ public class Main {
             homeDir = "/";
         }
 
-        // 未指定连接方式时显示 man Page
+        // 未指定连接方式时显示 help Page
         if (connect == null || connect.isEmpty()) {
             System.err.println(Strings.get("control_chanel_null"));
             Strings.printf("see_help");
@@ -202,32 +202,33 @@ public class Main {
     /**
      * 将所有命令行标签转化为 String 键值对
      * @param paramMap 参数键值对
-     * @param args 所有命令行标签
-     * @author nlsdt 2025-7-10
+     * @param args 所有命令行参数
+     * @author nlsdt 2025-7-15
      */
     private static void parseArguments(Map<String, String> paramMap, String[] args) {
         for (int i = 0; i < args.length; i++) {
             String arg = args[i];
 
-            // 处理参数
             if (arg.startsWith("-")) {
 
 
                 String value = null;
                 String key = arg;
 
+                // 有等号拆为键值对
                 if (arg.contains("=")) {
                     final int eqPos = arg.indexOf('=');
                     if (eqPos < arg.length() - 1) {
                         value = arg.substring(eqPos + 1);
                     }
-                    arg = arg.substring(0, eqPos);
-                }
-                // 检查下一个参数是否是值
+                    key = arg.substring(0, eqPos);
+                }   // 无等号获取下一个参数为值，跳过下一个参数
                 else if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
                     value = args[i + 1];
                     i++;
                 }
+
+                // 长参数短参数转换
 
                 switch (key){
                     case "--connect":       key = "-c"; break;
@@ -244,14 +245,12 @@ public class Main {
                     default: // 非法参数处理
                         if (arg.startsWith("-")) {
                             Strings.printf("unknown_option", key);
-                            Strings.printf("see_help");
                         } else {
                             Strings.printf("invalid_argument", key);
-                            Strings.printf("see_help");
-
                         }
+                        Strings.printf("see_help");
+                        System.exit(1);
                 }
-
                 paramMap.put(key, value);
             }
         }
