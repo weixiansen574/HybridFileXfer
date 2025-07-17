@@ -4,6 +4,11 @@
     <root id="archive" name="HybridFileXfer-PC.jar">
       <element id="module-output" name="HybridFileXfer-PC" />
       <element id="extracted-dir" path="$APPLICATION_HOME_DIR$/lib/annotations.jar" path-in-jar="/" />
+      <element id="archive" name="HybirdFileXfer.jar">
+        <element id="directory" name="META-INF">
+          <element id="file-copy" path="$PROJECT_DIR$/../../HybridFileXfer/HybridFileXfer-PC/src/META-INF/MANIFEST.MF" />
+        </element>
+      </element>
     </root>
   </artifact>
 </component>

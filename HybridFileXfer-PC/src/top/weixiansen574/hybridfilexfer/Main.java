@@ -1,3 +1,7 @@
+/**
+ * This program is free software: redistribute it and/or modify it under GPLv3+.
+ * See <https://www.gnu.org/licenses/> for full license details.
+ */
 package top.weixiansen574.hybridfilexfer;
 
 import top.weixiansen574.hybridfilexfer.core.Utils;
@@ -142,33 +146,44 @@ public class Main {
         }
     };
 
-
+    /**主函数*/
     public static void main(String[] args) throws Exception {
         Map<String, String> paramMap = new HashMap<>();
         parseArguments(paramMap, args);
-        String connect = paramMap.get("-c");
-        String homeDir = paramMap.get("-d");
+
+        // 打印版本号
+        if (paramMap.containsKey("-v")) {
+            Strings.printf("version");
+            return;
+        }
+
+        // 打印帮助
+        if (paramMap.containsKey("-h") || paramMap.isEmpty()) {
+            Strings.printf("help_pages");
+            return;
+        }
+
+        // 解析命令行参数
+        final String connect = paramMap.get("-c");
+        String homeDir = paramMap.get("-s");  //因为会修改为默认位置，所以不可以设置为不可变变量
+        final String device = paramMap.get("-d");
+
+        // 指定默认目录
         if (homeDir == null) {
             homeDir = "/";
         }
 
-        String serverAddress;
-
-        if (connect == null) {
-            /*
-            未指定控制通道连接方式
-            参数说明：
-            -c 控制通道连接方式 "adb" 或 网络ip
-            -s adb连接方式下指定的设备（adb有多设备的情况），你可以用"adb devices"命令查看设备
-            示例：
-            -c adb
-            -c adb -s abcd1234
-            -c 192.168.1.2
-            */
-            System.out.println(Strings.get("usage"));
+        // 未指定连接方式时显示 help Page
+        if (connect == null || connect.isEmpty()) {
+            System.err.println(Strings.get("control_chanel_null"));
+            Strings.printf("see_help");
             return;
-        } else if (connect.equals("adb")) {
-            if (executeAdbForwardCommand(5740, paramMap.get("-s"))) {
+        }
+
+        // 设置服务器地址
+        final String serverAddress;
+        if (connect.equals("adb")) {
+            if (executeAdbForwardCommand(5740, device)) {
                 System.out.println(Strings.get("adb_forward_succeed"));
                 serverAddress = "127.0.0.1";
             } else {
@@ -184,12 +199,59 @@ public class Main {
         }
     }
 
+    /**
+     * 将所有命令行标签转化为 String 键值对
+     * @param paramMap 参数键值对
+     * @param args 所有命令行参数
+     * @author nlsdt 2025-7-15
+     */
     private static void parseArguments(Map<String, String> paramMap, String[] args) {
-        // 遍历数组并解析参数
         for (int i = 0; i < args.length; i++) {
-            if (args[i].startsWith("-") && i + 1 < args.length && !args[i + 1].startsWith("-")) {
-                paramMap.put(args[i], args[i + 1]);
-                i++; // 跳过值
+            String arg = args[i];
+
+            if (arg.startsWith("-")) {
+
+
+                String value = null;
+                String key = arg;
+
+                // 有等号拆为键值对
+                if (arg.contains("=")) {
+                    final int eqPos = arg.indexOf('=');
+                    if (eqPos < arg.length() - 1) {
+                        value = arg.substring(eqPos + 1);
+                    }
+                    key = arg.substring(0, eqPos);
+                }   // 无等号获取下一个参数为值，跳过下一个参数
+                else if (i + 1 < args.length && !args[i + 1].startsWith("-")) {
+                    value = args[i + 1];
+                    i++;
+                }
+
+                // 长参数短参数转换
+
+                switch (key){
+                    case "--connect":       key = "-c"; break;
+                    case "--switch-device": key = "-s"; break;
+                    case "--dir":           key = "-d"; break;
+                    case "--help":          key = "-h"; break;
+                    case "--version":       key = "-v"; break;
+                    case "-c":
+                    case "-s":
+                    case "-d":
+                    case "-h":
+                    case "-v":
+                        break;
+                    default: // 非法参数处理
+                        if (arg.startsWith("-")) {
+                            Strings.printf("unknown_option", key);
+                        } else {
+                            Strings.printf("invalid_argument", key);
+                        }
+                        Strings.printf("see_help");
+                        System.exit(1);
+                }
+                paramMap.put(key, value);
             }
         }
     }

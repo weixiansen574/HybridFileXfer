@@ -67,14 +67,27 @@ USB_ADB的连接需要USB调试，请到开发者选项中打开，**如果你�
 **参数说明**
 
 ```
--c 控制通道连接方式 "adb" 或 网络ip
--s adb连接方式下指定的设备（adb有多设备的情况），你可以单独开个cmd窗口，用"adb devices"命令查看设备
--d 指定主目录，即手机上第一次展示的右侧对方目录
-示例：
--c adb
--c adb -s abcd1234
--c adb -d C:\Users\Administrator\Desktop\
--c 192.168.1.2
+Usage: HybirdFileXfer [OPTION]...
+	使用多 I/O 通道（如 USB 和 WiFi）加速从手机到电脑的文件传输。
+
+Mandatory arguments:
+	-c, --connect=ADDRESS	指定连接方式:
+				adb      = 使用 ADB 连接
+				IP_ADDR  = 使用网络直连 (如 192.168.1.114)
+	-s, --device=ID		指定 USB 设备 ID
+	-d, --dir=DIRECTORY	设置电脑接收目录 (默认: /)
+
+Other options:
+	-h, --help		显示此帮助信息
+	-v, --version		显示版本信息
+
+Examples:
+	HybirdFileXfer -c adb
+	HybirdFileXfer -c adb -s 2dd16815 -d C:\Users\Downloads
+	HybirdFileXfer -c 192.168.1.114 -d D:\Transfer\Files
+
+Report bugs to: <https://github.com/weixiansen574/HybirdFileXfer/issues>
+
 ```
 
 **完整启动命令示例**
