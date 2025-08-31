@@ -134,6 +134,24 @@ java -jar HybridFileXfer.jar -c adb
 
 目前仅支持x86 CPU的电脑，虽然Java是跨平台的，但是adb对处理器架构有要求。如果你需要在ARM，RISC-V，龙芯等CPU架构下运行，可以寻找对应处理器架构的adb程序，复制到jar包的同一目录。又或者使用USB网络共享。
 
+### ArchLinux 通过 AUR 安装
+
+> **重要提示：** 
+> 
+> 本项目的 issue 跟踪器 **仅用于** 讨论项目本身的 Bug 和功能请求。
+> **请不要在这里提交任何与 AUR 打包、`PKGBUILD` 语法、`makepkg` 错误或 AUR 助手相关的问题。** 
+> 如果你遇到 AUR 相关问题，请在 AUR **网页上的包评论区** 或向软件包维护者寻求帮助。
+
+本项目已在 [Arch Linux 用户仓库 (AUR)](https://aur.archlinux.org/packages/hybridfilexfer-git) 上发布，你可以使用任何你喜欢的 AUR 助手进行安装，例如：
+```bash
+# 使用 yay
+yay -S hybridfilexfer-git
+
+# 使用 paru
+paru -S hybridfilexfer-git
+```
+安装完成后，你可以通过在终端执行 `HybridFileXfer` 来启动电脑端。
+
 ### Mac电脑
 
 个人没尝试在Mac电脑上运行，但Java跨平台，ADB也有对应Mac版，可自己折腾。
