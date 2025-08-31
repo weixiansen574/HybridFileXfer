@@ -260,7 +260,7 @@ v1.2.0新增书签功能。
 
 **Dragonwell JDK** 的许可证原文请参见 [Dragonwell JDK License](https://github.com/dragonwell-project/dragonwell21/blob/master/LICENSE)。
 
-本项目整体使用 **GNU General Public License version 3 (GPL-3.0)**，许可证文件可以在 [LICENSE](./LICENSE) 文件中找到。
+本项目整体使用 **GNU General Public License version 3 (GPL-3.0)**，许可证文件可以在 [LICENSE](./LICENSE.txt) 文件中找到。
 
 ### Dragonwell JDK License
 
