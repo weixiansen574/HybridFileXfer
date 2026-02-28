@@ -102,7 +102,7 @@
     <string name="shizuku_startup_method_are_inconsistent_message_root">ROOT 모드를 선택했습니다. shizuku의 시작 방법은\n"시작 (루팅된 장치용)"이어야 합니다</string>
     <string name="shizuku_startup_method_are_inconsistent_message_adb">ADB 모드를 선택했습니다. shizuku의 시작 방법은\n"무선 디버깅으로 시작" 또는 "컴퓨터 연결로 시작 (adb 사용)"이어야 합니다</string>
     <string name="shizuku_not_running">shizuku가 실행 중이지 않습니다</string>
-    <string name="shizuku_not_running_message">ADB/ROOT 모드의 IO 서비스를 시작하려면 shizuku를 시작해야 합니다\nROOT만 필요하다면 Sui를 사용하면 더 편리합니다</string>
+    <string name="shizuku_not_running_message">ADB/ROOT 모드의 IO 서비스 시작을 지원하려면 shizuku를 실행해야 합니다.</string>
     <string name="open_shizuku">shizuku 열기</string>
     <string name="install_sui">Sui 설치</string>
     <string name="please_install_shizuku">Shizuku가 설치되지 않았습니다. 먼저 설치하세요</string>

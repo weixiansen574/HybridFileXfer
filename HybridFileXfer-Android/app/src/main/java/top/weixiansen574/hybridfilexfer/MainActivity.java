@@ -462,20 +462,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .setMessage(R.string.shizuku_not_running_message)
                 .setPositiveButton(R.string.open_shizuku, (dialog, which) -> {
                     try {
-                        ComponentName componentName = new ComponentName("moe.shizuku.privileged.api", "moe.shizuku.starter.MainActivity");
-                        Intent intent = new Intent();
-                        intent.setComponent(componentName);
+                        Intent intent = context.getPackageManager().getLaunchIntentForPackage("moe.shizuku.privileged.api");
                         context.startActivity(intent);
                     } catch (Exception e) {
                         Toast.makeText(context, R.string.please_install_shizuku, Toast.LENGTH_SHORT).show();
                         Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://shizuku.rikka.app/"));
                         context.startActivity(intent);
                     }
-                })
-                .setNeutralButton(R.string.install_sui, (dialog, which) -> {
-                    // 打开指定链接
-                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/RikkaApps/Sui/releases"));
-                    context.startActivity(intent);
                 })
                 .setNegativeButton(R.string.cancel, null)
                 .show();

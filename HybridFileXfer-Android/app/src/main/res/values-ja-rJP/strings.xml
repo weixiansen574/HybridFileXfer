@@ -103,7 +103,7 @@
     <string name="shizuku_startup_method_are_inconsistent_message_root">ROOTモードを選択しました。shizukuの起動方法は\n「起動（root化されたデバイス向け）」である必要があります</string>
     <string name="shizuku_startup_method_are_inconsistent_message_adb">ADBモードを選択しました。shizukuの起動方法は\n「無線デバッグで起動」または「コンピュータ接続で起動（adbを使用）」である必要があります</string>
     <string name="shizuku_not_running">shizukuが実行されていません</string>
-    <string name="shizuku_not_running_message">ADB/ROOTモードのIOサービスを起動するためにshizukuを起動する必要があります\nROOTのみが必要な場合は、Suiを使用すると便利です</string>
+    <string name="shizuku_not_running_message">ADB/ROOTモードのIOサービスをサポートするには、shizukuを起動する必要があります。</string>
     <string name="open_shizuku">shizukuを開く</string>
     <string name="install_sui">Suiをインストール</string>
     <string name="please_install_shizuku">Shizukuがインストールされていません。まずインストールしてください</string>
