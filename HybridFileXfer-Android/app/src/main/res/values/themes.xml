@@ -3,6 +3,8 @@
     <style name="Base.Theme.HybridFileXfer2" parent="Theme.AppCompat.DayNight.DarkActionBar">
         <!-- Customize your light theme here. -->
         <!-- <item name="colorPrimary">@color/my_light_primary</item> -->
+        <!-- 模式选择器弹出列表样式(行间细分隔线) -->
+        <item name="android:dropDownListViewStyle">@style/SpinnerDropDownListView</item>
     </style>
 
     <style name="Theme.HybridFileXfer2" parent="Base.Theme.HybridFileXfer2" />
@@ -11,6 +13,8 @@
         <item name="colorPrimaryDark">@color/primary_dark_material_dark</item>
         <item name="colorPrimary">@color/primary_material_dark</item>
         <!--<item name="colorControlNormal">@color/white</item>-->
+        <!-- 模式选择器弹出列表样式(行间细分隔线) -->
+        <item name="android:dropDownListViewStyle">@style/SpinnerDropDownListView</item>
     </style>
     <style name="ActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="colorControlNormal">@color/white</item>
@@ -20,5 +24,17 @@
 <!--        <item name="android:textColor">@color/fond</item>-->
 <!--        <item name="android:background">@color/black</item>-->
 <!--    </style>-->
+
+    <!-- 模式选择器弹出列表:行间细分隔线,ListPopupWindow 内部列表会读取此样式 -->
+    <style name="SpinnerDropDownListView" parent="Widget.AppCompat.ListView.DropDown">
+        <item name="android:divider">@color/spinner_divider</item>
+        <item name="android:dividerHeight">1dp</item>
+    </style>
+
+    <!-- 模式选择器弹出/收起动画:AppCompat 库自带的标准弹出菜单动画(150ms 淡入淡出) -->
+    <style name="ModePopupAnimation">
+        <item name="android:windowEnterAnimation">@anim/abc_popup_enter</item>
+        <item name="android:windowExitAnimation">@anim/abc_popup_exit</item>
+    </style>
 
 </resources>

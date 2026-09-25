@@ -31,6 +31,12 @@
             android:process=":IOService" >
         </service>
 
+        <service
+            android:name=".RootIOService"
+            android:exported="false"
+            android:process=":root"
+            tools:ignore="Instantiatable" />
+
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"

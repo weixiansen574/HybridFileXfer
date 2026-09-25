@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 模式下拉框:直角描边扁平样式,底色跟随系统悬浮层颜色(浅色白/深色灰) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+    <solid android:color="?attr/colorBackgroundFloating" />
+    <stroke
+        android:width="1dp"
+        android:color="@color/spinner_border" />
+</shape>

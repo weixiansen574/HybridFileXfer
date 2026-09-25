@@ -23,7 +23,6 @@ import android.view.View;
 import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Spinner;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
@@ -40,6 +39,7 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import rikka.shizuku.Shizuku;
+import com.topjohnwu.superuser.ipc.RootService;
 import top.weixiansen574.async.BackstageTask;
 import top.weixiansen574.hybridfilexfer.aidl.IIOService;
 import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
@@ -53,11 +53,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public static final int REQUEST_CODE_TRANSFER = 2;
     public static final int RESULT_CODE_SERVER_DISCONNECT = 1;
     private NetCardsAdapter netCardsAdapter;
-    private Spinner spinnerMode;
+    private ModeSelector spinnerMode;
     Button startServerBtn;
     Button toTransfer;
     Context context;
     private boolean isShizuku = false;
+    private boolean isRootSu = false;
     private HFXServer server;
     private Config config;
 
@@ -72,6 +73,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         toTransfer = findViewById(R.id.to_transfer);
         toTransfer.setOnClickListener(this);
         spinnerMode = findViewById(R.id.spinner_mode);
+        spinnerMode.setModes(getResources().getStringArray(R.array.select_mode));
         findViewById(R.id.refresh).setOnClickListener(this);
 
         RecyclerView recyclerView = findViewById(R.id.rec_view_net_cards);
@@ -145,13 +147,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             return;
         }
 
-        if (spinnerMode.getSelectedItemPosition() == 0) {
+        int selectedMode = spinnerMode.getSelectedItemPosition();
+        if (selectedMode == 0) {
             isShizuku = false;
+            isRootSu = false;
+        } else if (selectedMode == Config.MODE_ROOT_SU) {
+            isShizuku = false;
+            isRootSu = true;
         } else {
-            if (checkShizukuOrReq(spinnerMode.getSelectedItemPosition())) {
+            if (checkShizukuOrReq(selectedMode)) {
                 return;
             }
             isShizuku = true;
+            isRootSu = false;
         }
         bindAndStartService();
     }
@@ -160,7 +168,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         netCardsAdapter.setEnableModify(false);
         startServerBtn.setEnabled(false);
         startServerBtn.setText(R.string.ting_zhi_fu_wu);
-        if (isShizuku) {
+        if (isRootSu) {
+            Intent intent = new Intent(context, RootIOService.class);
+            RootService.bind(intent, this);
+        } else if (isShizuku) {
             Shizuku.bindUserService(IOService.getUserServiceArgs(context), this);
         } else {
             Intent intent = new Intent(context, IOService.class);
@@ -169,7 +180,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void unbindService() {
-        if (isShizuku) {
+        if (isRootSu) {
+            RootService.unbind(this);
+        } else if (isShizuku) {
             Shizuku.unbindUserService(IOService.getUserServiceArgs(context), this, true);
         } else {
             unbindService(this);
@@ -385,7 +398,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editIp.setText(config.getConnectServerControllerIp());
         EditText editMainDir = view.findViewById(R.id.edit_home_dir);
         editMainDir.setText(Environment.getExternalStorageDirectory().getAbsolutePath());
-        Spinner spinner = view.findViewById(R.id.spinner_mode);
+        ModeSelector spinner = view.findViewById(R.id.spinner_mode);
+        spinner.setModes(getResources().getStringArray(R.array.select_mode));
         spinner.setSelection(config.getClientIOMode());
         AlertDialog dialog = new AlertDialog.Builder(context)
                 .setView(view)
@@ -405,7 +419,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
             int mode = spinner.getSelectedItemPosition();
-            if (mode != 0) {
+            if (mode != 0 && mode != Config.MODE_ROOT_SU) {
                 if (checkShizukuOrReq(mode)) {
                     return;
                 }

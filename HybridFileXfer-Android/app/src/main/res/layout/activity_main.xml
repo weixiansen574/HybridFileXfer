@@ -17,53 +17,63 @@
             android:orientation="vertical"
             android:padding="10dp">
 
-            <androidx.constraintlayout.widget.ConstraintLayout
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="40dp">
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
 
                 <TextView
-                    android:id="@+id/textView2"
                     android:layout_width="wrap_content"
-                    android:minWidth="60dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="@string/conn"
+                    android:layout_height="wrap_content"
+                    android:text="@string/conn_mode"
                     android:textColor="@color/fond"
-                    android:textSize="22sp"
-                    app:layout_constraintStart_toStartOf="parent" />
+                    android:textSize="16sp" />
 
-                <TextView
-                    android:id="@+id/textView"
-                    android:layout_width="wrap_content"
-                    android:minWidth="60dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="@string/mode_"
-                    android:textColor="@color/fond"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/textView2" />
-
-                <Spinner
+                <top.weixiansen574.hybridfilexfer.ModeSelector
                     android:id="@+id/spinner_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:entries="@array/select_mode"
-                    app:layout_constraintStart_toEndOf="@+id/textView" />
+                    android:layout_width="match_parent"
+                    android:layout_height="44dp"
+                    android:layout_marginStart="12dp"
+                    android:background="@drawable/spinner_bg_underline"
+                    android:drawableEnd="@drawable/ic_chevron_down"
+                    android:drawablePadding="6dp"
+                    android:drawableTint="@color/spinner_arrow"
+                    android:foreground="?selectableItemBackground"
+                    android:gravity="center_vertical"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="10dp"
+                    android:textColor="@color/fond"
+                    android:textSize="15sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/net_cards"
+                    android:textColor="@color/fond"
+                    android:textSize="16sp" />
 
                 <LinearLayout
                     android:id="@+id/refresh"
                     android:layout_width="wrap_content"
-                    android:layout_height="30dp"
+                    android:layout_height="wrap_content"
                     android:clickable="true"
                     android:focusable="true"
                     android:foreground="?selectableItemBackground"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
+                    android:padding="4dp">
 
                     <ImageView
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
                         android:layout_gravity="center_vertical"
                         android:src="@drawable/baseline_refresh_24" />
 
@@ -73,8 +83,7 @@
                         android:layout_gravity="center_vertical"
                         android:text="@string/refresh" />
                 </LinearLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            </LinearLayout>
 
             <androidx.recyclerview.widget.RecyclerView
                 android:id="@+id/rec_view_net_cards"
@@ -96,16 +105,8 @@
                 android:layout_height="50dp"
                 android:enabled="false"
                 android:text="@string/transfer_files" />
-           <!-- <Button
-                android:id="@+id/test"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="测试" />-->
 
         </LinearLayout>
-
-
 
     </androidx.cardview.widget.CardView>
 

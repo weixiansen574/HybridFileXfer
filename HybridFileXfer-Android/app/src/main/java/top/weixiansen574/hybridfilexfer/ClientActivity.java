@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Objects;
 
 import rikka.shizuku.Shizuku;
+import com.topjohnwu.superuser.ipc.RootService;
 import top.weixiansen574.hybridfilexfer.aidl.IIOService;
 import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
@@ -39,6 +40,7 @@ import top.weixiansen574.hybridfilexfer.tasks.ConnectServerTask;
 public class ClientActivity extends AppCompatActivity implements ServiceConnection {
     Activity context;
     boolean isShizuku = false;
+    boolean isRootSu = false;
     int ioMode;
     String controllerIp;
     String homeDir;
@@ -65,7 +67,8 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
 
 
         ioMode = extras.getInt("io_mode");
-        isShizuku = ioMode != 0;
+        isShizuku = (ioMode != 0 && ioMode != Config.MODE_ROOT_SU);
+        isRootSu = (ioMode == Config.MODE_ROOT_SU);
         controllerIp = extras.getString("controller_ip");
         homeDir = extras.getString("home_dir");
 
@@ -84,7 +87,10 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
     }
 
     private void bindAndStartService() {
-        if (isShizuku) {
+        if (isRootSu) {
+            Intent intent = new Intent(context, RootIOService.class);
+            RootService.bind(intent, this);
+        } else if (isShizuku) {
             Shizuku.bindUserService(IOService.getUserServiceArgs(context), this);
         } else {
             Intent intent = new Intent(context, IOService.class);
@@ -93,7 +99,9 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
     }
 
     private void unbindService() {
-        if (isShizuku) {
+        if (isRootSu) {
+            RootService.unbind(this);
+        } else if (isShizuku) {
             Shizuku.unbindUserService(IOService.getUserServiceArgs(context), this, true);
         } else {
             unbindService(this);
