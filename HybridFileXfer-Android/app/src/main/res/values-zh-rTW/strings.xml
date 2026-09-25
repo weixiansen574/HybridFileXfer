@@ -40,6 +40,8 @@
     <string name="conn">連接</string>
     <string name="mode_">模式:</string>
     <string name="refresh">刷新</string>
+    <string name="conn_mode">連接模式</string>
+    <string name="net_cards">網卡</string>
     <string name="start_service_and_wait_onnect">啟動伺服器並等待連接</string>
     <string name="transfer_files">傳輸文件</string>
     <string name="loading__">加載中……</string>
@@ -139,4 +141,9 @@
     <string name="controller_channel_ip">控制器通道IP</string>
     <string name="any_connectable_network_card_ip">任意可連接的網卡IP</string>
     <string name="home_dir">主目錄</string>
+    <string name="kernelsu_root_not_available">Root權限不可用，請確認已安裝KernelSU/Magisk/APatch，並已授予本應用Root權限。</string>
+    <string name="requesting_root">正在請求Root權限……</string>
+    <string name="root_granted">Root權限已獲取</string>
+    <string name="root_denied">Root權限被拒絕</string>
+    <string name="root_service_disconnected">Root服務已斷開</string>
 </resources>

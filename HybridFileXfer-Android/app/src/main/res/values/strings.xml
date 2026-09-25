@@ -41,6 +41,8 @@
     <string name="conn">Conn</string>
     <string name="mode_">Mode:</string>
     <string name="refresh">Refresh</string>
+    <string name="conn_mode">Connection mode</string>
+    <string name="net_cards">Network cards</string>
     <string name="start_service_and_wait_onnect">Start the server and wait for connection</string>
     <string name="transfer_files">Transfer files</string>
     <string name="loading__">Loading…</string>
@@ -140,4 +142,9 @@
     <string name="controller_channel_ip">Controller channel IP</string>
     <string name="any_connectable_network_card_ip">Any connectable network card IP</string>
     <string name="home_dir">Home directory</string>
+    <string name="kernelsu_root_not_available">Root access is not available. Please make sure KernelSU/Magisk/APatch is installed and this app has been granted root permission.</string>
+    <string name="requesting_root">Requesting root access…</string>
+    <string name="root_granted">Root access granted</string>
+    <string name="root_denied">Root access denied</string>
+    <string name="root_service_disconnected">Root service disconnected</string>
 </resources>

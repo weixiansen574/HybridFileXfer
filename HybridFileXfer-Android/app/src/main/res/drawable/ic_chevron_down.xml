@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 下拉框收起态右侧的细箭头,颜色由 spinner_arrow 着色 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FF000000"
+        android:pathData="M7.41,8.59L12,13.17l4.59,-4.58L18,10l-6,6l-6,-6z" />
+</vector>

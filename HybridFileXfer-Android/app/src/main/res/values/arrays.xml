@@ -2,7 +2,8 @@
 <resources>
     <string-array name="select_mode">
         <item>@string/normal</item>
-        <item>Root</item>
-        <item>ADB</item>
+        <item>Root (Shizuku)</item>
+        <item>ADB (Shizuku)</item>
+        <item>Root (Kernel SU)</item>
     </string-array>
 </resources>

@@ -3,4 +3,8 @@
     <color name="fond">@color/white</color>
     <color name="blue_background_dark">#8AB4F8</color>
     <color name="blue_background_light">#394456</color>
+    <!-- 模式下拉框 -->
+    <color name="spinner_border">#757575</color>
+    <color name="spinner_divider">#525252</color>
+    <color name="spinner_arrow">#BDBDBD</color>
 </resources>

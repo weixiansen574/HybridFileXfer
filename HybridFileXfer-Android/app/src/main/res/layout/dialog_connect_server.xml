@@ -7,7 +7,7 @@
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="40dp">
+        android:layout_height="44dp">
 
         <TextView
             android:id="@+id/textView"
@@ -18,15 +18,23 @@
             android:gravity="center"
             android:text="@string/mode_"
             android:textColor="@color/fond"
-            android:textSize="16sp"
-            app:layout_constraintStart_toEndOf="@+id/textView2" />
+            android:textSize="16sp" />
 
-        <Spinner
+        <top.weixiansen574.hybridfilexfer.ModeSelector
             android:id="@+id/spinner_mode"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:entries="@array/select_mode"
-            app:layout_constraintStart_toEndOf="@+id/textView" />
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/spinner_bg_underline"
+            android:drawableEnd="@drawable/ic_chevron_down"
+            android:drawablePadding="6dp"
+            android:drawableTint="@color/spinner_arrow"
+            android:foreground="?selectableItemBackground"
+            android:gravity="center_vertical"
+            android:paddingStart="12dp"
+            android:paddingEnd="10dp"
+            android:textColor="@color/fond"
+            android:textSize="15sp" />
 
     </LinearLayout>
 
