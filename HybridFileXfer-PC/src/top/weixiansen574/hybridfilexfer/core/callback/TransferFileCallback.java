@@ -5,6 +5,19 @@ import java.util.List;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 
 public interface TransferFileCallback {
+    default void onProgress(top.weixiansen574.hybridfilexfer.core.TransferProgress progress) {}
+    default void onFileResult(String path, String status, String message) {}
+    default void onPhase(String phase) {}
+    default void onSummary(top.weixiansen574.hybridfilexfer.core.TransferSummary summary) {}
+    default void onVerificationProgress(top.weixiansen574.hybridfilexfer.core.VerificationProgress progress) {}
+    default void onVerificationStopped(boolean upload, long bytes, long millis) { onIncomplete(); }
+    /** 通知某条通道开始处理指定文件分块，用于界面展示各通道当前分块位置。 */
+    default void onChannelTask(String name, String path, boolean upload, long offset, long length, long fileSize) {
+        if (upload) onFileUploading(name, path, offset + length, fileSize);
+        else onFileDownloading(name, path, offset + length, fileSize);
+    }
+    /** 通知该通道当前分块任务已结束。 */
+    default void onChannelIdle(String name) {}
     int ERROR_TYPE_EXCEPTION = 1;
     int ERROR_TYPE_INTERRUPT = 2;
     int ERROR_TYPE_READ_ERROR = 3;

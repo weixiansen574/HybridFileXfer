@@ -30,7 +30,8 @@ public class LocalFileSelectAdapter extends FileSelectAdapter {
 
     @Override
     protected void handleListException(Throwable th) {
-
+        cancelLoading();
+        Toast.makeText(context, th.toString(), Toast.LENGTH_LONG).show();
     }
 
     @Override

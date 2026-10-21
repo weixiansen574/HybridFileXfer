@@ -13,6 +13,10 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 
 public class JdkHFXClient extends HFXClient {
+    @Override
+    protected top.weixiansen574.hybridfilexfer.core.TransferFileAccess createFileAccess() {
+        return new JdkTransferFileAccess();
+    }
 
     public JdkHFXClient(String serverControllerAddress, int serverPort, String homeDir) {
         super(serverControllerAddress, serverPort, homeDir);

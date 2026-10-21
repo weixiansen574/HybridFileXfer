@@ -35,11 +35,20 @@
 
     </FrameLayout>
 
+    <LinearLayout android:id="@+id/transfer_actions" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:orientation="horizontal"
+        app:layout_constraintBottom_toBottomOf="parent">
+        <Button android:id="@+id/transfer_to_remote" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="@string/send_to_remote" />
+        <Button android:id="@+id/transfer_to_local" android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:text="@string/send_to_local" />
+    </LinearLayout>
+
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/left"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/transfer_actions"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toLeftOf="@+id/right"
@@ -123,7 +132,7 @@
         android:id="@+id/right"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/transfer_actions"
         app:layout_constraintHorizontal_weight="1"
         app:layout_constraintLeft_toRightOf="@id/left"
         app:layout_constraintRight_toRightOf="parent"

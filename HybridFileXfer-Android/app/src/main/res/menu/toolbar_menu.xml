@@ -7,6 +7,9 @@
         android:title="@string/options"
         app:showAsAction="ifRoom">
         <menu>
+            <item android:id="@+id/recent_directories" android:title="@string/recent_directories" />
+            <item android:id="@+id/storage_locations" android:title="@string/storage_locations" />
+            <item android:id="@+id/transfer_history" android:title="@string/transfer_history" />
             <item
                 android:id="@+id/refresh"
                 android:icon="@drawable/baseline_refresh_24"

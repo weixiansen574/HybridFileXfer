@@ -8,7 +8,7 @@ import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 import top.weixiansen574.hybridfilexfer.core.callback.TransferFileCallback;
 
 public class SpeedMonitorThread extends Thread {
-    private boolean isRun = true;
+    private volatile boolean isRun = true;
     private final List<TransferConnection> connections;
     private final TransferFileCallback callback;
 
@@ -30,7 +30,8 @@ public class SpeedMonitorThread extends Thread {
             for (TransferConnection channel : connections) {
                 trafficInfoList.add(channel.resetCurrentTrafficInfo());
             }
-            callback.onSpeedInfo(trafficInfoList);
+            try { callback.onSpeedInfo(trafficInfoList); }
+            catch (RuntimeException ignored) { /* 忽略单个监听器的异常，避免速率统计线程退出 */ }
         }
     }
 

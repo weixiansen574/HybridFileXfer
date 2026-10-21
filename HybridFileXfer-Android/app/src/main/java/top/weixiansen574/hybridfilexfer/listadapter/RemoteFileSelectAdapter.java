@@ -70,11 +70,14 @@ public class RemoteFileSelectAdapter extends FileSelectAdapter {
     }
 
     private void onConnectionLost() {
-        context.setResult(MainActivity.RESULT_CODE_SERVER_DISCONNECT);
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.chuang_jian_shi_bai)
-                .setMessage(R.string.kong_tong_dao_de_lian_jie_yi_duan_kai__)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok, (dialog, which) -> context.finish()).show();
+        context.runOnUiThread(() -> {
+            if (context.isFinishing() || context.isDestroyed()) return;
+            // 若服务端已切换到新会话，忽略旧文件列表界面退出时的回调。
+            new AlertDialog.Builder(context)
+                    .setTitle(R.string.session_changed)
+                    .setMessage(R.string.kong_tong_dao_de_lian_jie_yi_duan_kai__)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> context.finish()).show();
+        });
     }
 }

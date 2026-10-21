@@ -1,0 +1,39 @@
+HybridFileXfer 第三方开源组件与代码来源声明
+Third-Party Components and Contribution Sources
+
+本项目整体遵循 GNU General Public License v3.0 (GPL-3.0) 协议开源；详见源码根目录及桌面发行包 Documentation 目录下的 LICENSE.txt 与 CHANGES.md。
+- 独立 JAR 包内路径：META-INF/LICENSE-GPL-3.0.txt、META-INF/CHANGES.md
+- Android APK 内路径：assets/licenses/LICENSE-GPL-3.0.txt、assets/licenses/CHANGES.md
+
+以下第三方组件各自保留其原有的开源许可证（Apache License 2.0），许可证原文位于源码及桌面发行包的 licenses/ 目录、独立 JAR 包的 META-INF/licenses/ 目录，以及 Android APK 的 assets/licenses/ 目录中。
+
+Desktop UI / 桌面界面库
+-----------------------
+FlatLaf 3.7.2
+Copyright (C) 2019-2026 FormDev Software GmbH. All rights reserved.
+Project: https://github.com/JFormDesigner/FlatLaf
+License: Apache License, Version 2.0 (FlatLaf-LICENSE.txt).
+
+独立 JAR 与桌面发行包直接打包了未修改的 FlatLaf 二进制类、多版本实现（Multi-Release）及原生资源（仅在合并构建应用 JAR 时省略其独立的 MANIFEST.MF 与 module-info.class）。
+Dependency URL:
+https://repo.maven.apache.org/maven2/com/formdev/flatlaf/3.7.2/flatlaf-3.7.2.jar
+SHA-256:
+917aff3963c88d797d0fd9b9ccbd70f7681c101df9d11c59e2bc7a3a6c0fabf4
+
+Android Direct su Backend / Android 直接 su 后端
+------------------------------------------------
+libsu core and service 6.0.0
+Copyright John "topjohnwu" Wu and libsu contributors.
+Project: https://github.com/topjohnwu/libsu/tree/6.0.0
+License: Apache License, Version 2.0 (libsu-LICENSE.txt).
+
+使用未修改的官方依赖包：com.github.topjohnwu.libsu:core:6.0.0 与 com.github.topjohnwu.libsu:service:6.0.0。
+
+Android 端的直接 su 后端参考并改编自 GitHub 用户 @189521394 在本项目 GPL-3.0 协议下提交的上游 PR #118：
+https://github.com/weixiansen574/HybridFileXfer/pull/118
+参考源提交：3531ea16b0865a1996092d8bd009b189690ccdf5
+在保留原模式选择器的基础上，调整了服务绑定、授权失败、取消、超时与资源清理逻辑。
+
+Packaged Java Runtime / 随包分发的 Java 运行时
+----------------------------------------------
+桌面便携版压缩包（App Image）内嵌了构建环境所使用 JDK 生成的精简 Java 运行时，其自带的许可证与第三方声明完整保留在运行时的 legal/ 目录下。

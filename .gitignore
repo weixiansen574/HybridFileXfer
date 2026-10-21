@@ -1,0 +1,12 @@
+.build/
+.tools/
+*.log
+*.hfxpart
+*.hfxstate
+HybridFileXfer-Android/.gradle/
+HybridFileXfer-Android/build/
+HybridFileXfer-Android/app/build/
+HybridFileXfer-Android/local.properties
+HybridFileXfer-Android/.cxx/
+HybridFileXfer-Android/app/.cxx/
+__pycache__/
