@@ -70,11 +70,15 @@ public class RemoteFileSelectAdapter extends FileSelectAdapter {
     }
 
     private void onConnectionLost() {
-        context.setResult(MainActivity.RESULT_CODE_SERVER_DISCONNECT);
-        new AlertDialog.Builder(context)
-                .setTitle(R.string.chuang_jian_shi_bai)
-                .setMessage(R.string.kong_tong_dao_de_lian_jie_yi_duan_kai__)
-                .setCancelable(false)
-                .setPositiveButton(R.string.ok, (dialog, which) -> context.finish()).show();
+        context.runOnUiThread(() -> {
+            if (context.isFinishing() || context.isDestroyed()) return;
+            // The process-owned ServerSession handles reconnection. An old browser must
+            // never report a result that stops a newly reconnected session.
+            new AlertDialog.Builder(context)
+                    .setTitle(R.string.session_changed)
+                    .setMessage(R.string.kong_tong_dao_de_lian_jie_yi_duan_kai__)
+                    .setCancelable(false)
+                    .setPositiveButton(R.string.ok, (dialog, which) -> context.finish()).show();
+        });
     }
 }

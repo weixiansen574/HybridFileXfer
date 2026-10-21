@@ -113,12 +113,12 @@
     <string name="connection_successful">연결 성공!</string>
     <string name="connecting_controller">제어 채널 연결 중: %s</string>
     <string name="connection_failed">연결 실패</string>
-    <string name="Inconsistent_protocol_versions">프로토콜 버전이 일치하지 않습니다. 당신의 버전: %d, 상대방 버전: %d</string>
+    <string name="Inconsistent_protocol_versions">프로토콜 버전이 일치하지 않습니다. 당신의 버전: %1$d, 상대방 버전: %2$d</string>
     <string name="control_channel_connection_failed">제어 채널 연결 실패. 서버가 시작되었는지 확인하세요. 또는 입력한 제어 채널 IP가 올바른지 확인하세요</string>
-    <string name="connecting_transfer_channel">연결 중 네트워크 카드 이름: %s 원격 주소: %s 바인딩 주소: %s\n</string>
-    <string name="transfer_channel_connection_failed">전송 채널 [%s][%s] 연결 실패. 오류 메시지: %s</string>
+    <string name="connecting_transfer_channel">연결 중 네트워크 카드 이름: %1$s 원격 주소: %2$s 바인딩 주소: %3$s\n</string>
+    <string name="transfer_channel_connection_failed">전송 채널 [%1$s][%2$s] 연결 실패. 오류 메시지: %3$s</string>
     <string name="c_oom_title">메모리 부족</string>
-    <string name="failed_to_create_buffer_block">버퍼 블록 생성 실패! 버퍼 블록 수를 줄이거나 (상대방이 설정) 이 장치의 백그라운드를 정리하세요. %d 블록이 생성되었지만 %d 블록이 필요합니다. 현재 최대 사용 가능 메모리: %dMB</string>
+    <string name="failed_to_create_buffer_block">버퍼 블록 생성 실패! 버퍼 블록 수를 줄이거나 (상대방이 설정) 이 장치의 백그라운드를 정리하세요. %1$d 블록이 생성되었지만 %2$d 블록이 필요합니다. 현재 최대 사용 가능 메모리: %3$dMB</string>
     <string name="c_remote_oom_title">상대방 메모리 부족</string>
     <string name="c_remote_oom_message">상대방이 표시하는 메시지를 확인하여 처리하세요</string>
     <string name="lian_jie_shi_fa_sheng_cuo_wu">연결 중 오류 발생</string>

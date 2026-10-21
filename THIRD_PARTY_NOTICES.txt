@@ -1,0 +1,50 @@
+HybridFileXfer third-party components and contribution sources
+
+The application and its modifications remain under GNU GPL version 3;
+see LICENSE.txt and CHANGES.md in the source tree and desktop Documentation.
+The standalone JAR keeps these as META-INF/LICENSE-GPL-3.0.txt and
+META-INF/CHANGES.md; APKs use assets/licenses/LICENSE-GPL-3.0.txt and
+assets/licenses/CHANGES.md. The components below retain their own licenses.
+Apache license texts are in licenses/ in the source tree and desktop package
+Documentation, META-INF/licenses/ in the JAR, and assets/licenses/ in Android APKs.
+
+Desktop UI
+----------
+
+FlatLaf 3.7.2
+Copyright (C) 2019-2026 FormDev Software GmbH. All rights reserved.
+Project: https://github.com/JFormDesigner/FlatLaf
+License: Apache License, Version 2.0 (FlatLaf-LICENSE.txt in the license directory).
+Original dependency classes and resources are bundled without modification;
+the dependency's manifest and module descriptor are omitted from the application
+JAR. Its multi-release implementations and native resources are retained.
+
+Dependency URL:
+https://repo.maven.apache.org/maven2/com/formdev/flatlaf/3.7.2/flatlaf-3.7.2.jar
+SHA-256:
+917aff3963c88d797d0fd9b9ccbd70f7681c101df9d11c59e2bc7a3a6c0fabf4
+
+Android direct su backend
+-------------------------
+
+libsu core and service 6.0.0
+Copyright John "topjohnwu" Wu and libsu contributors.
+Project: https://github.com/topjohnwu/libsu/tree/6.0.0
+License: Apache License, Version 2.0 (libsu-LICENSE.txt in the license directory).
+Unmodified dependencies: com.github.topjohnwu.libsu:core:6.0.0 and
+com.github.topjohnwu.libsu:service:6.0.0.
+
+The direct su backend selectively adapts the approach in upstream PR #118,
+submitted by GitHub user 189521394 under the project's GPL-3.0 license:
+https://github.com/weixiansen574/HybridFileXfer/pull/118
+Reviewed source commit: 3531ea16b0865a1996092d8bd009b189690ccdf5.
+This integration retains the existing mode selector and changes binding,
+authorization failure, cancellation, timeout and cleanup behavior. It does not
+include that PR's replacement mode selector or claim its device test results.
+
+Packaged Java runtime
+---------------------
+
+Desktop app images include the runtime from the JDK selected by the builder.
+The runtime vendor's license and third-party notices remain in its legal
+directory. The project does not replace those runtime license terms.

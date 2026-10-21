@@ -40,6 +40,7 @@ public class DroidWriteFileCall extends WriteFileCall {
     @Override
     protected FileChannel createAndOpenFile(String path, long length) throws Exception {
         pfd = ioService.createAndOpenWriteableFile(path, length);
+        if (pfd == null) throw new IOException("Cannot create destination file: " + path);
         fileOutputStream = new FileOutputStream(pfd.getFileDescriptor());
         channel = fileOutputStream.getChannel();
         return channel;

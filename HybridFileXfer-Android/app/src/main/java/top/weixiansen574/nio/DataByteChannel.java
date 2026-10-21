@@ -10,7 +10,8 @@ import java.nio.charset.StandardCharsets;
 
 public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
     private final ByteChannel origin;
-    private final ByteBuffer buffer = ByteBuffer.allocate(8);
+    private final ByteBuffer readBuffer = ByteBuffer.allocate(8);
+    private final ByteBuffer writeBuffer = ByteBuffer.allocate(8);
 
     public DataByteChannel(ByteChannel origin) {
         this.origin = origin;
@@ -26,6 +27,13 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
         return origin.write(src);
     }
 
+    public void writeFully(ByteBuffer src) throws IOException {
+        while (src.hasRemaining()) {
+            if (Thread.currentThread().isInterrupted()) throw new IOException("Interrupted write");
+            if (origin.write(src) == 0) Thread.yield();
+        }
+    }
+
     @Override
     public boolean isOpen() {
         return origin.isOpen();
@@ -38,6 +46,7 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     public void readFully(ByteBuffer dst) throws IOException {
         while (dst.hasRemaining()) {
+            if (Thread.currentThread().isInterrupted()) throw new IOException("Interrupted read");
             if (origin.read(dst) == -1) {
                 throw new EOFException();
             }
@@ -67,10 +76,10 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public byte readByte() throws IOException {
-        buffer.clear().limit(1);
-        readFully(buffer);
-        buffer.flip();
-        return buffer.get();
+        readBuffer.clear().limit(1);
+        readFully(readBuffer);
+        readBuffer.flip();
+        return readBuffer.get();
     }
 
     @Override
@@ -80,10 +89,10 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public short readShort() throws IOException {
-        buffer.clear().limit(2);
-        readFully(buffer);
-        buffer.flip();
-        return buffer.getShort();
+        readBuffer.clear().limit(2);
+        readFully(readBuffer);
+        readBuffer.flip();
+        return readBuffer.getShort();
     }
 
     @Override
@@ -98,18 +107,18 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public int readInt() throws IOException {
-        buffer.clear().limit(4);
-        readFully(buffer);
-        buffer.flip();
-        return buffer.getInt();
+        readBuffer.clear().limit(4);
+        readFully(readBuffer);
+        readBuffer.flip();
+        return readBuffer.getInt();
     }
 
     @Override
     public long readLong() throws IOException {
-        buffer.clear().limit(8);
-        readFully(buffer);
-        buffer.flip();
-        return buffer.getLong();
+        readBuffer.clear().limit(8);
+        readFully(readBuffer);
+        readBuffer.flip();
+        return readBuffer.getLong();
     }
 
     @Override
@@ -147,7 +156,7 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public void write(byte[] b, int off, int len) throws IOException {
-        origin.write(ByteBuffer.wrap(b, off, len));
+        writeFully(ByteBuffer.wrap(b, off, len));
     }
 
     @Override
@@ -157,18 +166,18 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public void writeByte(int v) throws IOException {
-        buffer.clear();
-        buffer.put((byte) v);
-        buffer.flip();
-        origin.write(buffer);
+        writeBuffer.clear();
+        writeBuffer.put((byte) v);
+        writeBuffer.flip();
+        writeFully(writeBuffer);
     }
 
     @Override
     public void writeShort(int v) throws IOException {
-        buffer.clear();
-        buffer.putShort((short) v);
-        buffer.flip();
-        origin.write(buffer);
+        writeBuffer.clear();
+        writeBuffer.putShort((short) v);
+        writeBuffer.flip();
+        writeFully(writeBuffer);
     }
 
     @Override
@@ -178,18 +187,18 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
 
     @Override
     public void writeInt(int v) throws IOException {
-        buffer.clear();
-        buffer.putInt(v);
-        buffer.flip();
-        origin.write(buffer);
+        writeBuffer.clear();
+        writeBuffer.putInt(v);
+        writeBuffer.flip();
+        writeFully(writeBuffer);
     }
 
     @Override
     public void writeLong(long v) throws IOException {
-        buffer.clear();
-        buffer.putLong(v);
-        buffer.flip();
-        origin.write(buffer);
+        writeBuffer.clear();
+        writeBuffer.putLong(v);
+        writeBuffer.flip();
+        writeFully(writeBuffer);
     }
 
     @Override

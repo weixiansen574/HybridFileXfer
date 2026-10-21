@@ -25,6 +25,130 @@ interface IIOService {
 }
 */
 public class IOServiceImpl extends IIOService.Stub {
+    private final top.weixiansen574.hybridfilexfer.core.LocalTransferFileAccess transferFiles =
+            new top.weixiansen574.hybridfilexfer.core.LocalTransferFileAccess() {
+                @Override protected String fileIdentity(File file) throws IOException {
+                    try {
+                        android.system.StructStat stat=android.system.Os.stat(file.getPath());
+                        return stat.st_dev+":"+stat.st_ino;
+                    } catch (android.system.ErrnoException e) { throw new IOException(e); }
+                }
+                @Override protected boolean sameFile(File first, File second) throws IOException {
+                    try {
+                        android.system.StructStat a=android.system.Os.stat(first.getPath());
+                        android.system.StructStat b=android.system.Os.stat(second.getPath());
+                        return a.st_dev==b.st_dev && a.st_ino==b.st_ino;
+                    } catch (android.system.ErrnoException e) { throw new IOException(e); }
+                }
+                @Override protected void atomicMove(File source, File target, boolean replace) throws IOException {
+                    try {
+                        if (replace) android.system.Os.rename(source.getPath(), target.getPath());
+                        else NativeMemory.moveNoReplace(source.getPath(), target.getPath());
+                    } catch (android.system.ErrnoException e) {
+                        throw new IOException(e);
+                    } catch (LinkageError e) {
+                        // Privileged user-service ClassLoaders can lack the APK native path.
+                        // Fail the commit and retain its verified staging file. Never replace
+                        // this with a check-then-rename that could overwrite another file.
+                        throw new IOException("Safe file publication is unavailable in this I/O process", e);
+                    }
+                }
+            };
+
+    public String[] describeTransferFile(String path) {
+        try {
+            top.weixiansen574.hybridfilexfer.core.bean.RemoteFile file = transferFiles.stat(path);
+            return new String[]{file.getName(), file.getPath(), Long.toString(file.lastModified()),
+                    Long.toString(file.getSize()), Boolean.toString(file.isDirectory())};
+        } catch (IOException e) { return new String[]{e.toString()}; }
+    }
+    public void beginTransferFileSession() { transferFiles.beginSession(); }
+    public void cancelPendingTransferOperations() { transferFiles.cancelPendingOperations(); }
+    public String[] takeTransferFileWarnings() {
+        return transferFiles.takeWarnings().toArray(new String[0]);
+    }
+    public String[] canonicalTransferPath(String path) {
+        try { return new String[]{transferFiles.canonicalPath(path), ""}; }
+        catch (IOException e) { return new String[]{"",e.toString()}; }
+    }
+    public ParcelFileDescriptor openTransferSource(String path) {
+        try {
+            if (transferFiles.stat(path).isDirectory()) return null;
+            return ParcelFileDescriptor.open(new File(path), ParcelFileDescriptor.MODE_READ_ONLY);
+        } catch (IOException e) { return null; }
+    }
+    public String[] prepareTransferFile(String root, String relative, String identity, long size, long modified,
+                                        String hash, int policy, boolean resume, boolean incremental) {
+        try {
+            top.weixiansen574.hybridfilexfer.core.TransferOptions options = new top.weixiansen574.hybridfilexfer.core.TransferOptions();
+            options.conflictPolicy = top.weixiansen574.hybridfilexfer.core.TransferOptions.ConflictPolicy.values()[policy];
+            options.resume = resume; options.incremental = incremental;
+            return transferFiles.prepare(root, relative, identity, size, modified, hash, options).encode();
+        } catch (IOException | RuntimeException e) {
+            top.weixiansen574.hybridfilexfer.core.TransferFileAccess.Prepared p =
+                    new top.weixiansen574.hybridfilexfer.core.TransferFileAccess.Prepared();
+            p.status = "failed"; p.message = e.toString();
+            return p.encode();
+        }
+    }
+    public ParcelFileDescriptor openTransferStage(String token, String handleId) {
+        try { return ParcelFileDescriptor.open(new File(transferFiles.reserveExternalHandle(token,handleId,false)), ParcelFileDescriptor.MODE_READ_WRITE); }
+        catch (IOException e) {
+            try { transferFiles.closeExternalHandle(token,handleId); } catch (IOException ignored) {}
+            return null;
+        }
+    }
+    public String sealTransferFile(String token) {
+        try { transferFiles.seal(token); return null; } catch (IOException e) { return e.toString(); }
+    }
+    public ParcelFileDescriptor openSealedTransferFile(String token, String handleId) {
+        try { return ParcelFileDescriptor.open(new File(transferFiles.reserveExternalHandle(token,handleId,true)), ParcelFileDescriptor.MODE_READ_ONLY); }
+        catch (IOException e) {
+            try { transferFiles.closeExternalHandle(token,handleId); } catch (IOException ignored) {}
+            try { transferFiles.releaseVerification(token); } catch (IOException ignored) {}
+            return null;
+        }
+    }
+    public String closeTransferHandle(String token, String handleId) {
+        try { transferFiles.closeExternalHandle(token,handleId); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
+    public String completeTransferVerification(String token, String expected, String actual) {
+        try { transferFiles.completeVerification(token,expected,actual); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
+    public String releaseTransferVerification(String token) {
+        try { transferFiles.releaseVerification(token); return null; } catch (IOException e) { return e.toString(); }
+    }
+    public String resetTransferFileForRetry(String token) {
+        try { transferFiles.resetForRetry(token); return null; } catch (IOException e) { return e.toString(); }
+    }
+    public String[] publishUnverifiedTransferFile(String token) {
+        try { return new String[]{transferFiles.publishUnverified(token),""}; }
+        catch (IOException e) { return new String[]{"",e.toString()}; }
+    }
+    public String retainUnverifiedTransferFile(String token) {
+        try { transferFiles.retainUnverified(token); return null; } catch (IOException e) { return e.toString(); }
+    }
+    public String endTransferFileSession() {
+        try { transferFiles.endSession(); return null; } catch (IOException e) { return e.toString(); }
+    }
+    public String checkpointTransferFile(String token, long offset) {
+        try { transferFiles.checkpoint(token, offset); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
+    public String commitTransferFile(String token, boolean verifySha256) {
+        try { transferFiles.commit(token, verifySha256); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
+    public String abandonTransferFile(String token, boolean keep) {
+        try { transferFiles.abandon(token, keep); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
+    public String createTransferDirectory(String root, String relative, long modified) {
+        try { transferFiles.createDirectory(root, relative, modified); return null; }
+        catch (IOException e) { return e.toString(); }
+    }
     //由于Parcel的限制，传输太大的文件列表信息会直接崩，所以要分块
     public static final int CHUNK_SIZE = 1000;
     private final AtomicInteger localFileListSliceId = new AtomicInteger(1);

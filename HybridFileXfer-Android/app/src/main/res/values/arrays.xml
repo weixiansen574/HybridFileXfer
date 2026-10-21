@@ -2,7 +2,13 @@
 <resources>
     <string-array name="select_mode">
         <item>@string/normal</item>
-        <item>Root</item>
-        <item>ADB</item>
+        <item>Root (Shizuku)</item>
+        <item>ADB (Shizuku)</item>
+        <item>@string/root_direct_su</item>
+    </string-array>
+    <string-array name="conflict_policies">
+        <item>@string/conflict_keep_both</item>
+        <item>@string/conflict_skip</item>
+        <item>@string/conflict_overwrite</item>
     </string-array>
 </resources>

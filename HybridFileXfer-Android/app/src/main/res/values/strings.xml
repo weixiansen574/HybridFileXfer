@@ -114,12 +114,12 @@
     <string name="connection_successful">Connection successful!</string>
     <string name="connecting_controller">Connecting to control channel: %s</string>
     <string name="connection_failed">Connection failed</string>
-    <string name="Inconsistent_protocol_versions">Inconsistent protocol versions, your version: %d, peer version: %d</string>
+    <string name="Inconsistent_protocol_versions">Inconsistent protocol versions, your version: %1$d, peer version: %2$d</string>
     <string name="control_channel_connection_failed">Control channel connection failed. Please check if the server is running, or if the controller channel IP you entered is correct.</string>
-    <string name="connecting_transfer_channel">Connecting to network card: %s, remote address: %s, bind address: %s\n</string>
-    <string name="transfer_channel_connection_failed">Transfer channel [%s][%s] connection failed, error: %s</string>
+    <string name="connecting_transfer_channel">Connecting to network card: %1$s, remote address: %2$s, bind address: %3$s\n</string>
+    <string name="transfer_channel_connection_failed">Transfer channel [%1$s][%2$s] connection failed, error: %3$s</string>
     <string name="c_oom_title">Out of Memory</string>
-    <string name="failed_to_create_buffer_block">Failed to create buffer block! Please try reducing the number of buffer blocks (set by the peer) or clear background processes on this machine. Successfully created %d blocks, required %d blocks. Current maximum available memory: %dMB</string>
+    <string name="failed_to_create_buffer_block">Failed to create buffer block! Please try reducing the number of buffer blocks (set by the peer) or clear background processes on this machine. Successfully created %1$d blocks, required %2$d blocks. Current maximum available memory: %3$dMB</string>
     <string name="c_remote_oom_title">Peer Out of Memory</string>
     <string name="c_remote_oom_message">Please check the information displayed on the peer side for further action.</string>
     <string name="lian_jie_shi_fa_sheng_cuo_wu">Error occurred while connecting</string>
