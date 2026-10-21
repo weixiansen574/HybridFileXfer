@@ -17,21 +17,42 @@
             android:layout_height="wrap_content"
             android:layout_margin="8dp">
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
             <TextView
                 android:id="@+id/state"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="12sp"
-                android:paddingVertical="8sp"
+                android:paddingStart="12sp" android:paddingEnd="12sp"
+                android:paddingTop="8sp" android:paddingBottom="8sp"
                 android:text="@string/connecting"
                 android:textColor="@color/fond"
                 android:textSize="18sp" />
+            <ProgressBar
+                android:id="@+id/verification_progress"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="12dp"
+                android:layout_marginEnd="12dp"
+                android:visibility="gone" />
+            <Button
+                android:id="@+id/stop_verification"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:layout_marginEnd="8dp"
+                android:text="@string/stop_verification"
+                android:visibility="gone" />
+            </LinearLayout>
         </androidx.cardview.widget.CardView>
 
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
+            android:layout_marginStart="8dp" android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp">
 
             <LinearLayout
@@ -83,7 +104,7 @@
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="8dp"
+            android:layout_marginStart="8dp" android:layout_marginEnd="8dp"
             android:layout_marginBottom="8dp">
             <LinearLayout
                 android:id="@+id/connections"

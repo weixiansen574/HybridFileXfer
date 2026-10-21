@@ -114,12 +114,12 @@
     <string name="connection_successful">接続に成功しました！</string>
     <string name="connecting_controller">制御チャネルに接続中：%s</string>
     <string name="connection_failed">接続に失敗しました</string>
-    <string name="Inconsistent_protocol_versions">プロトコルバージョンが一致しません。あなたのバージョン：%d、相手のバージョン：%d</string>
+    <string name="Inconsistent_protocol_versions">プロトコルバージョンが一致しません。あなたのバージョン：%1$d、相手のバージョン：%2$d</string>
     <string name="control_channel_connection_failed">制御チャネルの接続に失敗しました。サーバーが起動しているか確認してください。または、入力した制御チャネルIPが正しいか確認してください</string>
-    <string name="connecting_transfer_channel">接続中 ネットワークカード名：%s リモートアドレス：%s バインドアドレス：%s\n</string>
-    <string name="transfer_channel_connection_failed">転送チャネル [%s][%s] の接続に失敗しました。エラーメッセージ：%s</string>
+    <string name="connecting_transfer_channel">接続中 ネットワークカード名：%1$s リモートアドレス：%2$s バインドアドレス：%3$s\n</string>
+    <string name="transfer_channel_connection_failed">転送チャネル [%1$s][%2$s] の接続に失敗しました。エラーメッセージ：%3$s</string>
     <string name="c_oom_title">メモリ不足</string>
-    <string name="failed_to_create_buffer_block">バッファブロックの作成に失敗しました！バッファブロック数を減らす（相手が設定）か、このデバイスのバックグラウンドをクリーンアップしてください。%dブロックが作成されましたが、%dブロックが必要です。現在の最大利用可能メモリ：%dMB</string>
+    <string name="failed_to_create_buffer_block">バッファブロックの作成に失敗しました！バッファブロック数を減らす（相手が設定）か、このデバイスのバックグラウンドをクリーンアップしてください。%1$dブロックが作成されましたが、%2$dブロックが必要です。現在の最大利用可能メモリ：%3$dMB</string>
     <string name="c_remote_oom_title">相手のメモリ不足</string>
     <string name="c_remote_oom_message">相手が表示するメッセージを確認して処理してください</string>
     <string name="lian_jie_shi_fa_sheng_cuo_wu">接続中にエラーが発生しました</string>

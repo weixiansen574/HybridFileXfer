@@ -113,12 +113,12 @@
     <string name="connection_successful">连接成功！</string>
     <string name="connecting_controller">正在连接控制通道：%s</string>
     <string name="connection_failed">连接失败</string>
-    <string name="Inconsistent_protocol_versions">协议版本不一致，你的版本：%d，对方版本：%d</string>
+    <string name="Inconsistent_protocol_versions">协议版本不一致，你的版本：%1$d，对方版本：%2$d</string>
     <string name="control_channel_connection_failed">控制通道连接失败，请检查服务端是否启动？或者你输入的控制器通道IP是否正确？</string>
-    <string name="connecting_transfer_channel">正在连接 网卡名：%s 远程地址：%s 绑定地址：%s\n</string>
-    <string name="transfer_channel_connection_failed">传输通道 [%s][%s] 连接失败，异常信息：%s</string>
+    <string name="connecting_transfer_channel">正在连接 网卡名：%1$s 远程地址：%2$s 绑定地址：%3$s\n</string>
+    <string name="transfer_channel_connection_failed">传输通道 [%1$s][%2$s] 连接失败，异常信息：%3$s</string>
     <string name="c_oom_title">内存不足</string>
-    <string name="failed_to_create_buffer_block">创建缓冲区块失败！请尝试调小缓冲区块数（由对方设定）或者清理本机后台。成功创建%d块，需要%d块。当前最大可用内存：%dMB</string>
+    <string name="failed_to_create_buffer_block">创建缓冲区块失败！请尝试调小缓冲区块数（由对方设定）或者清理本机后台。成功创建%1$d块，需要%2$d块。当前最大可用内存：%3$dMB</string>
     <string name="c_remote_oom_title">对方内存不足</string>
     <string name="c_remote_oom_message">请查看对方所显示的信息进行处理</string>
     <string name="lian_jie_shi_fa_sheng_cuo_wu">连接时发生错误</string>

@@ -38,6 +38,7 @@ public class DroidReadFileCall extends ReadFileCall {
     @Override
     protected FileChannel openFile(String path) throws Exception {
         pfd = ioService.openReadableFile(path);
+        if (pfd == null) throw new java.io.IOException("Cannot open source file: " + path);
         fileInputStream = new FileInputStream(pfd.getFileDescriptor());
         channel = fileInputStream.getChannel();
         return channel;

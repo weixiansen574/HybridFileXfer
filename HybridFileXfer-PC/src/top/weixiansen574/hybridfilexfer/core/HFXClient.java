@@ -9,6 +9,12 @@ import java.nio.channels.SocketChannel;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Collections;
+import java.util.concurrent.*;
+import top.weixiansen574.hybridfilexfer.security.Pairing;
+import top.weixiansen574.hybridfilexfer.security.AuthenticationException;
+import top.weixiansen574.hybridfilexfer.security.ProtocolMismatchException;
+import top.weixiansen574.hybridfilexfer.security.HandshakeDeadline;
 
 import top.weixiansen574.hybridfilexfer.core.bean.Directory;
 import top.weixiansen574.hybridfilexfer.core.bean.RemoteFile;
@@ -16,133 +22,184 @@ import top.weixiansen574.hybridfilexfer.core.callback.ClientCallBack;
 import top.weixiansen574.hybridfilexfer.core.callback.ConnectServerCallback;
 import top.weixiansen574.nio.DataByteChannel;
 
-public abstract class HFXClient extends HFXService {
+public abstract class HFXClient extends HFXService implements AutoCloseable {
 
     protected final String serverControllerAddress;
     protected final int serverPort;
     protected final String homeDir;
-    protected boolean isRun = true;
+    protected volatile boolean isRun = true;
+    private volatile boolean closed;
+    private String pairingSecret;
+    private int controllerPort, adbForwardPort;
+    private int connectTimeoutMs = 5000;
+    private final List<SocketChannel> openedChannels = Collections.synchronizedList(new ArrayList<SocketChannel>());
     protected ClientCallBack callBack;
+    // Native DNS cannot reliably be interrupted. Bound the number of resolver
+    // threads, and let callers cancel/time out without waiting for the OS.
+    private static final ThreadPoolExecutor RESOLVER = new ThreadPoolExecutor(
+            0, 2, 30L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(),
+            runnable -> {
+                Thread thread = new Thread(runnable, "hfx-dns");
+                thread.setDaemon(true);
+                return thread;
+            });
 
     public HFXClient(String serverControllerAddress, int serverPort,String homeDir) {
         this.serverControllerAddress = serverControllerAddress;
         this.serverPort = serverPort;
         this.homeDir = homeDir;
+        this.controllerPort = serverPort;
+    }
+
+    public void configureConnection(String secret, int controllerPort, int adbForwardPort, int timeoutMs) {
+        this.pairingSecret = Pairing.validateSecret(secret);
+        if (controllerPort < 1 || controllerPort > 65535 || adbForwardPort < 0 || adbForwardPort > 65535)
+            throw new IllegalArgumentException("Port must be between 1 and 65535");
+        this.controllerPort = controllerPort;
+        this.adbForwardPort = adbForwardPort;
+        this.connectTimeoutMs = Math.max(1000, Math.min(30000, timeoutMs));
+    }
+
+    private SocketChannel openChannel(InetAddress address, int port, InetAddress bind) throws IOException {
+        SocketChannel channel = SocketChannel.open();
+        synchronized (openedChannels) {
+            if (closed) { channel.close(); throw new IOException("Connection cancelled"); }
+            openedChannels.add(channel);
+        }
+        channel.socket().setTcpNoDelay(true);
+        channel.socket().setKeepAlive(true);
+        if (bind != null) channel.bind(new InetSocketAddress(bind, 0));
+        channel.socket().connect(new InetSocketAddress(address, port), connectTimeoutMs);
+        return channel;
+    }
+
+    private InetAddress resolveAddress(String host) throws IOException {
+        Future<InetAddress> lookup;
+        try {
+            lookup = RESOLVER.submit(() -> InetAddress.getByName(host));
+        } catch (RejectedExecutionException busy) {
+            throw new IOException("Address resolver is busy; retry shortly", busy);
+        }
+        long end = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(connectTimeoutMs);
+        try {
+            while (!closed) {
+                long remaining = end - System.nanoTime();
+                if (remaining <= 0) throw new IOException("Address lookup timed out");
+                try {
+                    return lookup.get(Math.min(remaining, TimeUnit.MILLISECONDS.toNanos(100)),
+                            TimeUnit.NANOSECONDS);
+                } catch (TimeoutException waiting) {
+                    // Recheck close() even when the system DNS implementation is stalled.
+                } catch (InterruptedException cancelled) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Connection cancelled", cancelled);
+                } catch (ExecutionException failed) {
+                    throw new IOException("Cannot resolve server address", failed.getCause());
+                }
+            }
+            throw new IOException("Connection cancelled");
+        } finally {
+            lookup.cancel(true);
+        }
     }
 
     public boolean connect(ConnectServerCallback callback) throws IOException {
+        if (pairingSecret == null) throw new AuthenticationException("Enter the pairing code shown on the phone.");
+        boolean success = false;
         try {
-            //System.out.println("正在连接控制通道：" + serverControllerAddress);
-            callback.onConnectingControlChannel(serverControllerAddress, serverPort);
-            ctChannel = new DataByteChannel(SocketChannel
-                    .open(new InetSocketAddress(serverControllerAddress,serverPort)));
-
-            ctChannel.write(CLIENT_HEADER.getBytes(StandardCharsets.UTF_8));
-            ctChannel.writeInt(VERSION_CODE);
-            if (!ctChannel.readBoolean()) {
-                //System.out.println("版本不一致，你的版本：" + VERSION_CODE + "，对方版本：" + ctChannel.readInt());
-                callback.onVersionMismatch(VERSION_CODE, ctChannel.readInt());
-                ctChannel.close();
-                return false;
-            }
-        } catch (IOException e) {
-            //System.out.println("控制通道连接到手机失败，请检查手机的服务端是否启动？");
-            callback.onConnectControlFailed();
-            return false;
-        }
-        int ipCount = ctChannel.readInt();
-        String[] names = new String[ipCount];
-        InetAddress[] addresses = new InetAddress[ipCount];
-        InetAddress[] bindAddresses = new InetAddress[ipCount];
-
-        for (int i = 0; i < ipCount; i++) {
-            String name = ctChannel.readUTF();
-            byte[] address = new byte[ctChannel.readByte()];
-            ctChannel.readFully(address);
-            InetAddress inetAddress = InetAddress.getByAddress(address);
-            byte l46 = ctChannel.readByte();
-            InetAddress bindAddress = null;
-            if (l46 != 0) {
-                byte[] bAddress = new byte[l46];
-                ctChannel.readFully(bAddress);
-                bindAddress = InetAddress.getByAddress(bAddress);
-            }
-            names[i] = name;
-            addresses[i] = inetAddress;
-            bindAddresses[i] = bindAddress;
-        }
-        connections = new ArrayList<>(ipCount);
-        for (int i = 0; i < ipCount; i++) {
-            SocketChannel socketChannel;
-            String name = names[i];
-            InetAddress inetAddress = addresses[i];
-            InetAddress bindAddress = bindAddresses[i];
-            /*System.out.printf("正在连接 网卡名：%s 远程地址：%s 绑定地址：%s\n", name, inetAddress.getHostAddress(), bindAddress == null ?
-                    "null" : bindAddress.getHostAddress());*/
-            callback.onConnectingTransferChannel(name, inetAddress, bindAddress);
-            /*if (name.equals("USB_ADB") && !serverControllerAddress.equals("127.0.0.1")) {
-                System.err.println("错误：你在手机上选用了USB_ADB网卡，但没有使用ADB进行连接");
-                ctChannel.writeBoolean(false);
-                socket.close();
-                return false;
-            }*/
-            try {
-                if (bindAddress == null) {
-                    socketChannel = SocketChannel.open(new InetSocketAddress(inetAddress, serverPort));
-                } else {
-                    socketChannel = SocketChannel.open();
-                    socketChannel.bind(new InetSocketAddress(bindAddress, 0));
-                    socketChannel.connect(new InetSocketAddress(inetAddress, serverPort));
+            callback.onConnectingControlChannel(serverControllerAddress, controllerPort);
+            SocketChannel control = openChannel(resolveAddress(serverControllerAddress), controllerPort, null);
+            try (HandshakeDeadline deadline = new HandshakeDeadline(control, 60000)) {
+                DataByteChannel raw = new DataByteChannel(control);
+                raw.write(CLIENT_HEADER.getBytes(StandardCharsets.UTF_8));
+                raw.writeInt(VERSION_CODE);
+                if (!raw.readBoolean()) {
+                    int remoteVersion = raw.readInt();
+                    callback.onVersionMismatch(VERSION_CODE, remoteVersion);
+                    throw new ProtocolMismatchException(VERSION_CODE, remoteVersion);
                 }
-                connections.add(new TransferConnection(name, new DataByteChannel(socketChannel)));
-            } catch (IOException e) {
-                callback.onConnectTransferChannelFailed(name,inetAddress, e);
-                ctChannel.writeBoolean(false);
-                ctChannel.writeUTF(name);
-                ctChannel.close();
-                return false;
+                Pairing.Session session = Pairing.client(raw, pairingSecret);
+                ctChannel = session.channel;
+                int count = ctChannel.readInt();
+                if (count < 1 || count > 16) throw new IOException("Invalid channel count");
+                String[] names = new String[count];
+                InetAddress[] addresses = new InetAddress[count], binds = new InetAddress[count];
+                for (int i = 0; i < count; i++) {
+                    names[i] = ctChannel.readUTF();
+                    if (names[i].length() > 64) throw new IOException("Invalid channel name");
+                    int length = ctChannel.readUnsignedByte();
+                    if (length != 4 && length != 16) throw new IOException("Invalid IP address");
+                    byte[] address = new byte[length];
+                    ctChannel.readFully(address);
+                    addresses[i] = InetAddress.getByAddress(address);
+                    length = ctChannel.readUnsignedByte();
+                    if (length != 0 && length != 4 && length != 16) throw new IOException("Invalid bind address");
+                    if (length > 0) {
+                        address = new byte[length]; ctChannel.readFully(address);
+                        binds[i] = InetAddress.getByAddress(address);
+                    }
+                }
+                connections = new ArrayList<>(count);
+                for (int i = 0; i < count; i++) {
+                    InetAddress address = addresses[i];
+                    int port = serverPort;
+                    if ("USB_ADB".equals(names[i]) && adbForwardPort > 0) {
+                        address = InetAddress.getByName("127.0.0.1");
+                        port = adbForwardPort;
+                    }
+                    callback.onConnectingTransferChannel(names[i], address, binds[i]);
+                    SocketChannel data;
+                    try {
+                        data = openChannel(address, port, binds[i]);
+                    } catch (IOException error) {
+                        ctChannel.writeBoolean(false);
+                        ctChannel.writeUTF(names[i]);
+                        callback.onConnectTransferChannelFailed(names[i], address, error);
+                        throw error;
+                    }
+                    // Announce before the data handshake: the server now knows which index to bind.
+                    ctChannel.writeBoolean(true);
+                    ctChannel.writeUTF(names[i]);
+                    try (HandshakeDeadline dataDeadline = new HandshakeDeadline(data, 10000)) {
+                        DataByteChannel secure = Pairing.clientData(new DataByteChannel(data), session, i);
+                        if (!ctChannel.readBoolean()) throw new IOException("Data channel was rejected");
+                        connections.add(new TransferConnection(names[i], secure));
+                    }
+                }
+                int bufferCount = ctChannel.readInt();
+                if (bufferCount < 1 || bufferCount > 256) throw new IOException("Invalid buffer count");
+                // Protocol 4 allocates bounded per-channel buffers on demand.
+                ctChannel.writeBoolean(true);
+                if (!ctChannel.readBoolean()) { callback.onRemoteOOM(); return false; }
+                ctChannel.writeInt(Directory.getCurrentFileSystem());
+                ctChannel.writeUTF(homeDir);
+                List<String> channelNames = new ArrayList<>();
+                for (TransferConnection channel : connections) channelNames.add(channel.iName);
+                callback.onConnectSuccess(channelNames);
+                success = true;
+                return true;
             }
-            ctChannel.writeBoolean(true);
-            ctChannel.writeUTF(name);
-            ctChannel.readBoolean();
+        } catch (AuthenticationException | ProtocolMismatchException error) {
+            throw error;
+        } catch (IOException error) {
+            callback.onConnectControlFailed();
+            throw error;
+        } finally {
+            if (!success) close();
         }
-        //初始化缓冲区块
-        int bufferCount = ctChannel.readInt();
-        for (int i = 0; i < bufferCount; i++) {
-            ByteBuffer buffer = createBuffer(FileBlock.BLOCK_SIZE);
-            if (buffer != null){
-                buffers.add(buffer);
-            } else {
-                String arch = System.getProperty("os.arch");
-                long availableMemoryMB = getAvailableMemoryMB();
-                /*System.out.println("内存不足，创建缓冲区块失败！请尝试调小缓冲区块数（1MB每块）。成功创建" + i + "块，需要"
-                        + bufferCount + "块。当前JVM最大内存：" + maxMemoryMB + "MB");
-                if (arch != null && !arch.contains("64")) {
-                    System.out.println("检测你正在使用32位Java，内存受限，建议使用64位Java");
-                }*/
-                freeBuffers();
-                callback.onOOM(i, bufferCount, availableMemoryMB, arch);
-                ctChannel.writeBoolean(false);
-                return false;
+    }
+
+    @Override public void close() {
+        closed = true;
+        isRun = false;
+        cancelTransfer();
+        synchronized (openedChannels) {
+            for (SocketChannel channel : openedChannels) {
+                try { channel.close(); } catch (IOException ignored) { }
             }
+            openedChannels.clear();
         }
-        ctChannel.writeBoolean(true);
-        if (!ctChannel.readBoolean()) {
-            //System.out.println("连接失败，手机端内存不足，请调小缓存区块数");
-            callback.onRemoteOOM();
-            return false;
-        }
-        //返回文件系统信息给对方
-        ctChannel.writeInt(Directory.getCurrentFileSystem());
-        //返回主路径信息给对方
-        ctChannel.writeUTF(homeDir);
-        //System.out.println("传输通道已全部连接完成");
-        List<String> channelNames = new ArrayList<>(connections.size());
-        for (TransferConnection connection : connections) {
-            channelNames.add(connection.iName);
-        }
-        callback.onConnectSuccess(channelNames);
-        return true;
+        buffers.clear();
     }
 
     public abstract ByteBuffer createBuffer(int size);
@@ -173,6 +230,11 @@ public abstract class HFXClient extends HFXService {
                 case ControllerIdentifiers.SHUTDOWN:
                     handleShutdown();
                     break;
+                case 0x7f01: // Idle heartbeat, serialized with server-initiated operations.
+                    ctChannel.writeBoolean(true);
+                    break;
+                default:
+                    throw new IOException("Unknown control command: " + id);
             }
         }
     }
@@ -213,23 +275,8 @@ public abstract class HFXClient extends HFXService {
     protected abstract boolean mkdir(String parent, String child) throws Exception;
 
     private void handleShutdown() {
-        isRun = false;
-        try {
-            ctChannel.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        if (connections != null) {
-            for (TransferConnection transferConnection : connections) {
-                try {
-                    transferConnection.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-        callBack.onExit();
-        //System.out.println("收到停止指令，客户端已正常关闭！");
+        close();
+        if (callBack != null) callBack.onExit();
     }
 
     private void handleListFiles() throws Exception {
@@ -293,6 +340,7 @@ public abstract class HFXClient extends HFXService {
 
     private void handleSendFiles() throws IOException {
         int listSize = ctChannel.readInt();
+        if (listSize < 0 || listSize > 100000) throw new IOException("Invalid file list size");
         List<RemoteFile> fileList = new ArrayList<>(listSize);
         for (int i = 0; i < listSize; i++) {
             fileList.add(new RemoteFile(new File(ctChannel.readUTF())));

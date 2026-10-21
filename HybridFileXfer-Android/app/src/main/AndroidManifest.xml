@@ -11,6 +11,11 @@
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
 
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -31,6 +36,18 @@
             android:process=":IOService" >
         </service>
 
+        <service android:name=".RootIOService" android:exported="false" tools:ignore="Instantiatable" />
+        <service android:name=".SessionService" android:exported="false" android:foregroundServiceType="dataSync" />
+
+        <!-- Intentionally exported for adb shell content call. Every entry point checks
+             the Binder UID (shell 2000 or root 0 only); no URI grants or file access. -->
+        <provider
+            android:name=".AdbPairingProvider"
+            android:authorities="${applicationId}.adb-pairing"
+            android:exported="true"
+            android:grantUriPermissions="false"
+            tools:ignore="ExportedContentProvider" />
+
         <provider
             android:name="rikka.shizuku.ShizukuProvider"
             android:authorities="${applicationId}.shizuku"
@@ -41,6 +58,7 @@
 
         <activity
             android:name=".TransferActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
             android:exported="false"
             android:theme="@style/Theme.HybridFileXfer2.NoActionBar" />
         <!--
@@ -51,6 +69,8 @@
         -->
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboardHidden"
+            android:launchMode="singleTop"
             android:exported="true" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

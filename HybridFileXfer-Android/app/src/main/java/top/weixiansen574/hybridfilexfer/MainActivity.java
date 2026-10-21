@@ -3,18 +3,14 @@ package top.weixiansen574.hybridfilexfer;
 import android.Manifest;
 import android.app.ActivityManager;
 import android.app.AlertDialog;
-import android.app.Service;
-import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.IBinder;
 import android.provider.Settings;
 import android.text.TextUtils;
 import android.view.Menu;
@@ -40,15 +36,10 @@ import java.net.UnknownHostException;
 import java.util.List;
 
 import rikka.shizuku.Shizuku;
-import top.weixiansen574.async.BackstageTask;
-import top.weixiansen574.hybridfilexfer.aidl.IIOService;
 import top.weixiansen574.hybridfilexfer.core.bean.ServerNetInterface;
-import top.weixiansen574.hybridfilexfer.droidcore.HFXServer;
-import top.weixiansen574.hybridfilexfer.droidcore.StartServerTask;
-import top.weixiansen574.hybridfilexfer.droidcore.callback.StartServerCallback;
 import top.weixiansen574.hybridfilexfer.listadapter.NetCardsAdapter;
 
-public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServiceConnection {
+public class MainActivity extends AppCompatActivity implements View.OnClickListener, ServerSession.Listener {
     public static final int REQUEST_CODE_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION = 1;
     public static final int REQUEST_CODE_TRANSFER = 2;
     public static final int RESULT_CODE_SERVER_DISCONNECT = 1;
@@ -57,8 +48,18 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     Button startServerBtn;
     Button toTransfer;
     Context context;
-    private boolean isShizuku = false;
-    private HFXServer server;
+    public static final String ACTION_REQUEST_START = "top.weixiansen574.hybridfilexfer.action.REQUEST_START";
+    private ServerSession session;
+    private String requestedSecret;
+    private int requestedPort;
+    private boolean startApproved;
+    private AlertDialog pendingStartDialog;
+    private String lastStartRequestId;
+    private android.widget.TextView sessionDetails;
+    private final Shizuku.OnRequestPermissionResultListener permissionListener = (requestCode, grantResult) -> {
+        if (startApproved && grantResult == PackageManager.PERMISSION_GRANTED) startServer();
+        else startApproved = false;
+    };
     private Config config;
 
     @Override
@@ -67,6 +68,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         setContentView(R.layout.activity_main);
         context = this;
         config = Config.getInstance(context);
+        session = ServerSession.get(this);
+        sessionDetails = findViewById(R.id.session_details);
+        Shizuku.addRequestPermissionResultListener(permissionListener);
         startServerBtn = findViewById(R.id.start_server);
         startServerBtn.setOnClickListener(this);
         toTransfer = findViewById(R.id.to_transfer);
@@ -100,13 +104,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             }
         });
+        session.attach(this);
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS}, 5741);
+        }
+        if (savedInstanceState == null) handleStartIntent(getIntent());
     }
 
     @Override
     public void onClick(View v) {
         int id = v.getId();
         if (id == R.id.start_server) {
-            if (server == null) {
+            if (!session.active) {
                 startServer();
             } else {
                 disconnect(true);
@@ -114,7 +124,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else if (id == R.id.to_transfer) {
             startActivityForResult(new Intent(context, TransferActivity.class), REQUEST_CODE_TRANSFER);
         } else if (id == R.id.refresh) {
-            if (server == null) {
+            if (!session.active && netCardsAdapter != null) {
                 try {
                     netCardsAdapter.reload();
                 } catch (SocketException | UnknownHostException e) {
@@ -127,6 +137,19 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void startServer() {
+        if (session.active) return;
+        if (netCardsAdapter == null) {
+            Toast.makeText(this, R.string.io_start_failed, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (ClientSession.get(this).active) {
+            Toast.makeText(this, R.string.session_already_running, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (!startApproved) {
+            confirmStart(top.weixiansen574.hybridfilexfer.security.Pairing.newSecret(), config.getServerPort());
+            return;
+        }
         if (checkPermissionOrRequest()) {
             Toast.makeText(context, R.string.xu_yao_wen_jian_du_xie_quan_xian, Toast.LENGTH_LONG).show();
             return;
@@ -139,111 +162,95 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             Toast.makeText(context, R.string.mei_you_wang_ka_xuan_ze, Toast.LENGTH_SHORT).show();
             return;
         }
-        long availableMemoryMB = getAvailableMemoryMB();
-        if (config.getLocalBufferCount() > availableMemoryMB) {
-            Toast.makeText(context, R.string.shou_ji_ke_yong_nei_cun_bu_zu, Toast.LENGTH_SHORT).show();
+        int mode = spinnerMode.getSelectedItemPosition();
+        if (mode != Config.MODE_NORMAL && mode != Config.MODE_ROOT_SU && checkShizukuOrReq(mode)) return;
+        startApproved = false;
+        session.start(mode, requestedPort, requestedSecret, selectedInterfaces,
+                config.getLocalBufferCount(), config.getRemoteBufferCount());
+        requestedSecret = null;
+    }
+
+    @Override public void onSessionChanged() {
+        if (netCardsAdapter == null) return;
+        netCardsAdapter.setEnableModify(!session.active);
+        spinnerMode.setEnabled(!session.active);
+        startServerBtn.setEnabled(true);
+        startServerBtn.setText(session.active ? R.string.ting_zhi_fu_wu : R.string.start_service_and_wait_onnect);
+        toTransfer.setEnabled(session.connected);
+        String details = session.message;
+        if (session.active) details += "\n" + getString(R.string.pairing_code) + ": " + session.pairingSecret;
+        sessionDetails.setText(details);
+        for (java.util.Map.Entry<String, String> item : session.interfaces.entrySet()) {
+            netCardsAdapter.changeItemState(item.getKey(), item.getValue());
+        }
+    }
+
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleStartIntent(intent);
+    }
+
+    private void handleStartIntent(Intent intent) {
+        if (intent == null || !ACTION_REQUEST_START.equals(intent.getAction())) return;
+        String requestId = intent.getStringExtra("request_id");
+        String secret = intent.getStringExtra("pairing_secret");
+        int port = intent.getIntExtra("server_port", config.getServerPort());
+        // Consume once. Extras are never persisted or logged.
+        intent.removeExtra("pairing_secret");
+        intent.setAction(Intent.ACTION_MAIN);
+        if (requestId != null && requestId.equals(lastStartRequestId)) return;
+        lastStartRequestId = requestId;
+        if (session.active || ClientSession.get(this).active) {
+            Toast.makeText(this, R.string.session_already_running, Toast.LENGTH_LONG).show();
+            onSessionChanged();
             return;
         }
-
-        if (spinnerMode.getSelectedItemPosition() == 0) {
-            isShizuku = false;
-        } else {
-            if (checkShizukuOrReq(spinnerMode.getSelectedItemPosition())) {
-                return;
-            }
-            isShizuku = true;
-        }
-        bindAndStartService();
-    }
-
-    private void bindAndStartService() {
-        netCardsAdapter.setEnableModify(false);
-        startServerBtn.setEnabled(false);
-        startServerBtn.setText(R.string.ting_zhi_fu_wu);
-        if (isShizuku) {
-            Shizuku.bindUserService(IOService.getUserServiceArgs(context), this);
-        } else {
-            Intent intent = new Intent(context, IOService.class);
-            bindService(intent, this, Service.BIND_AUTO_CREATE);
+        try {
+            secret = secret == null ? top.weixiansen574.hybridfilexfer.security.Pairing.newSecret()
+                    : top.weixiansen574.hybridfilexfer.security.Pairing.validateSecret(secret);
+            if (port < 1024 || port > 65535) throw new IllegalArgumentException();
+            confirmStart(secret, port);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, R.string.invalid_connection_settings, Toast.LENGTH_LONG).show();
         }
     }
 
-    private void unbindService() {
-        if (isShizuku) {
-            Shizuku.unbindUserService(IOService.getUserServiceArgs(context), this, true);
-        } else {
-            unbindService(this);
-        }
-    }
-
-    @Override
-    public void onServiceConnected(ComponentName name, IBinder service) {
-        IIOService iioService = IIOService.Stub.asInterface(service);
-        server = new HFXServer(iioService);
-        StartServerCallback callback = new StartServerCallback() {
-            @Override
-            public void onBindFailed(int port) {
-                Toast.makeText(context, getString(R.string.service_start_failed, port), Toast.LENGTH_SHORT).show();
-                netCardsAdapter.setEnableModify(true);
-                startServerBtn.setEnabled(true);
-                startServerBtn.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
-                server = null;
+    private void confirmStart(String secret, int port) {
+        startApproved = false;
+        requestedSecret = null;
+        if (pendingStartDialog != null) pendingStartDialog.dismiss();
+        android.widget.LinearLayout form = new android.widget.LinearLayout(this);
+        form.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        form.setPadding(padding, padding / 2, padding, 0);
+        android.widget.TextView description = new android.widget.TextView(this);
+        description.setText(getString(R.string.confirm_start_description) + "\n\n" +
+                getString(R.string.pairing_code) + ": " + secret);
+        description.setTextIsSelectable(true);
+        form.addView(description);
+        EditText portInput = new EditText(this);
+        portInput.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        portInput.setHint(R.string.server_port);
+        portInput.setText(String.valueOf(port));
+        form.addView(portInput);
+        AlertDialog dialog = new AlertDialog.Builder(this).setTitle(R.string.confirm_start_title)
+                .setView(form).setNegativeButton(R.string.cancel, null).setPositiveButton(R.string.ok, null).show();
+        pendingStartDialog = dialog;
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            try {
+                int selectedPort = Integer.parseInt(portInput.getText().toString());
+                if (selectedPort < 1024 || selectedPort > 65535) throw new NumberFormatException();
+                requestedPort = selectedPort;
+                requestedSecret = secret;
+                config.setServerPort(selectedPort);
+                startApproved = true;
+                dialog.dismiss();
+                startServer();
+            } catch (NumberFormatException e) {
+                portInput.setError(getString(R.string.invalid_connection_settings));
             }
-
-            @Override
-            public void onStatedServer() {
-                startServerBtn.setEnabled(true);
-                Toast.makeText(context, R.string.fu_wu_yi_qi_dong, Toast.LENGTH_SHORT).show();
-                for (ServerNetInterface selectedInterface : netCardsAdapter.getSelectedInterfaces()) {
-                    netCardsAdapter.changeItemState(selectedInterface.name, getString(R.string.deng_dai_lian_jie));
-                }
-            }
-
-            @Override
-            public void onAccepted(String name) {
-                netCardsAdapter.changeItemState(name, getString(R.string.yi_lian_jie));
-            }
-
-            @Override
-            public void onAcceptFailed(String name) {
-                netCardsAdapter.changeItemState(name, getString(R.string.lian_jie_shi_bai));
-            }
-
-            @Override
-            public void onPcOOM() {
-                Toast.makeText(context, R.string.dui_fang_nei_cun_bu_zu, Toast.LENGTH_LONG).show();
-                changeToStartState();
-            }
-
-            @Override
-            public void onMeOOM(int created, int localBufferCount) {
-                Toast.makeText(context, getString(R.string.buffer_block_creation_failed_toast,
-                        created, localBufferCount), Toast.LENGTH_LONG).show();
-                changeToStartState();
-            }
-
-            @Override
-            public void onConnectSuccess() {
-                toTransfer.setEnabled(true);
-                //设置静态实例，使得传输Activity能使用
-                HFXServer.instance = server;
-                //TODO 国际化
-                startServerBtn.setText(R.string.duan_kai_lian_jie);
-            }
-
-            @Override
-            public void onError(Throwable th) {
-                Toast.makeText(context, R.string.fu_wu_yi_ting_zhi, Toast.LENGTH_SHORT).show();
-                changeToStartState();
-            }
-        };
-        new StartServerTask(callback,server,config.getServerPort(), netCardsAdapter.getSelectedInterfaces(),
-                config.getLocalBufferCount(), config.getRemoteBufferCount()).execute();
-    }
-
-    @Override
-    public void onServiceDisconnected(ComponentName name) {
-        System.out.println("onServiceDisconnected");
+        });
     }
 
     private boolean checkPermissionOrRequest() {
@@ -278,6 +285,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION && startApproved) {
+            if (Build.VERSION.SDK_INT < 30 || Environment.isExternalStorageManager()) startServer();
+            else startApproved = false;
+        }
         if (requestCode == REQUEST_CODE_TRANSFER) {
             if (resultCode == RESULT_CODE_SERVER_DISCONNECT) {
                 disconnect(false);
@@ -376,6 +387,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void startClient() {
+        if (ClientSession.get(this).active) {
+            startActivity(new Intent(this, ClientActivity.class));
+            return;
+        }
+        if (session.active) {
+            Toast.makeText(this, R.string.session_already_running, Toast.LENGTH_LONG).show();
+            return;
+        }
         //客户端一样要申请存储权限
         if (checkPermissionOrRequest()) {
             return;
@@ -385,6 +404,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         editIp.setText(config.getConnectServerControllerIp());
         EditText editMainDir = view.findViewById(R.id.edit_home_dir);
         editMainDir.setText(Environment.getExternalStorageDirectory().getAbsolutePath());
+        EditText pairingInput = view.findViewById(R.id.edit_pairing_code);
+        EditText portInput = view.findViewById(R.id.edit_server_port);
+        portInput.setText(String.valueOf(config.getServerPort()));
         Spinner spinner = view.findViewById(R.id.spinner_mode);
         spinner.setSelection(config.getClientIOMode());
         AlertDialog dialog = new AlertDialog.Builder(context)
@@ -405,14 +427,26 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 return;
             }
             int mode = spinner.getSelectedItemPosition();
-            if (mode != 0) {
+            if (mode != Config.MODE_NORMAL && mode != Config.MODE_ROOT_SU) {
                 if (checkShizukuOrReq(mode)) {
                     return;
                 }
             }
+            String pairing;
+            int port;
+            try {
+                pairing = top.weixiansen574.hybridfilexfer.security.Pairing.validateSecret(pairingInput.getText().toString());
+                port = Integer.parseInt(portInput.getText().toString());
+                if (port < 1024 || port > 65535) throw new IllegalArgumentException();
+            } catch (IllegalArgumentException e) {
+                pairingInput.setError(getString(R.string.invalid_connection_settings));
+                return;
+            }
             config.setConnectServerControllerIp(ip);
             config.setClientIOMode(mode);
             Intent intent = new Intent(context, ClientActivity.class);
+            intent.putExtra("pairing_secret", pairing);
+            intent.putExtra("server_port", port);
             intent.putExtra("io_mode", spinner.getSelectedItemPosition());
             intent.putExtra("controller_ip", ip);
             intent.putExtra("home_dir", editMainDir.getText().toString());
@@ -422,6 +456,17 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public boolean checkShizukuOrReq(int mode) {
+        try {
+            return checkShizukuPermission(mode);
+        } catch (RuntimeException e) {
+            // The Shizuku process may die between pingBinder and the permission/UID RPC.
+            startApproved = false;
+            Toast.makeText(this, R.string.io_disconnected, Toast.LENGTH_LONG).show();
+            return true;
+        }
+    }
+
+    private boolean checkShizukuPermission(int mode) {
         if (!Shizuku.pingBinder()) {
             showInstallShizukuDialog(context);
             return true;
@@ -474,34 +519,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 .show();
     }
 
-    private void changeToStartState() {
-        netCardsAdapter.setEnableModify(true);
-        startServerBtn.setEnabled(true);
-        startServerBtn.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
-        server = null;
-        unbindService();
+    private void disconnect(boolean toast) {
+        session.stop();
     }
 
-    private void disconnect(boolean toast) {
-        startServerBtn.setEnabled(false);
-        if (HFXServer.instance == null) {
-            server.closeServerSocket();
-        } else {
-            server.disconnect(new BackstageTask.BaseEventHandler() {
-                @Override
-                public void onComplete() {
-                    if (toast) {
-                        Toast.makeText(context, R.string.fu_wu_yi_guan_bi, Toast.LENGTH_SHORT).show();
-                    }
-                    unbindService();
-                    netCardsAdapter.setEnableModify(true);
-                    toTransfer.setEnabled(false);
-                    startServerBtn.setText(R.string.qi_dong_fu_wu_qi_bing_deng_dai_lian_jie);
-                    startServerBtn.setEnabled(true);
-                    HFXServer.instance = null;
-                    server = null;
-                }
-            });
+    @Override public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                                     @NonNull int[] results) {
+        super.onRequestPermissionsResult(requestCode, permissions, results);
+        if (requestCode == 0 && startApproved) {
+            if (results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED) startServer();
+            else startApproved = false;
         }
     }
 
@@ -520,12 +547,20 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         return (long) (availableMemoryMB - (totalMemoryMB * 0.05));
     }
 
+    @Override protected void onStart() {
+        super.onStart();
+        if (session != null) session.attach(this);
+    }
+    @Override protected void onStop() {
+        if (session != null) session.detach(this);
+        super.onStop();
+    }
+
     @Override
     protected void onDestroy() {
-        if (HFXServer.instance != null) {
-            HFXServer.instance.disconnect(new BackstageTask.BaseEventHandler() {
-            });
-        }
+        session.detach(this);
+        if (pendingStartDialog != null) pendingStartDialog.dismiss();
+        Shizuku.removeRequestPermissionResultListener(permissionListener);
         super.onDestroy();
     }
 }

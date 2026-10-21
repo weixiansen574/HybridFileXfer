@@ -20,7 +20,7 @@
                 android:icon="@drawable/baseline_more_vert_24"
                 android:title="@string/open_wifi_p2p_settings" />
             <item
-                android:id="@+id/buffer_count"
+                android:id="@+id/buffer_count" android:visible="false"
                 android:icon="@drawable/baseline_grid_view_24"
                 android:title="@string/huan_chong_qu_she_zhi" />
             <item
