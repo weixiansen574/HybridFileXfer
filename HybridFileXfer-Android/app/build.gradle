@@ -31,10 +31,46 @@ android {
         aidl = true
     }
 
+    /*
+     * 发布签名。3.1 起改用随机生成的证书，不再复用 debug key。
+     *
+     * 证书来源优先级：
+     *   1. 环境变量 HFX_KEYSTORE（CI 里从 Secret 解码后指定）
+     *   2. ~/.android/hfx-release.jks（本地构建的默认位置）
+     * 密码通过 HFX_KEYSTORE_PASSWORD 传入，别名默认 hybridfilexfer。
+     * 两者都缺失时退化为未签名构建，保证源码在没有证书的机器上仍可编译。
+     */
+    def hfxKeystore = System.getenv("HFX_KEYSTORE")
+    if (!hfxKeystore) {
+        def fallback = new File(System.getProperty("user.home"), ".android/hfx-release.jks")
+        if (fallback.exists()) {
+            hfxKeystore = fallback.absolutePath
+        }
+    }
+    def hfxStorePass = System.getenv("HFX_KEYSTORE_PASSWORD")
+    def hfxKeyAlias = System.getenv("HFX_KEY_ALIAS") ?: "hybridfilexfer"
+    def hfxKeyPass = System.getenv("HFX_KEY_PASSWORD") ?: hfxStorePass
+    def hfxSigningReady = hfxKeystore != null && hfxStorePass != null
+            && new File(hfxKeystore.toString()).exists()
+
+    signingConfigs {
+        if (hfxSigningReady) {
+            release {
+                storeFile file(hfxKeystore)
+                storePassword hfxStorePass
+                keyAlias hfxKeyAlias
+                keyPassword hfxKeyPass
+            }
+        }
+    }
+
     buildTypes {
         release {
             minifyEnabled true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            if (hfxSigningReady) {
+                signingConfig signingConfigs.release
+            }
         }
     }
     compileOptions {

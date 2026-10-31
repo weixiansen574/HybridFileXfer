@@ -1,0 +1,185 @@
+name: 'Release'
+
+# 推送 v* 标签即自动出包；也可以在 Actions 页面手动指定 tag 重跑。
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '要发布的标签（必须已存在，例如 v3.1）'
+        required: true
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ github.event.inputs.tag || github.ref_name }}
+
+jobs:
+  android:
+    name: 'Android APK'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tag || github.ref }}'
+          fetch-depth: 0
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: 'Setup Gradle'
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: 'Setup Android SDK'
+        uses: android-actions/setup-android@v3
+        with:
+          log-accepted-android-sdk-licenses: false
+          packages: 'tools platform-tools cmake;3.10.2.4988404'
+
+      - name: 'Restore signing keystore'
+        env:
+          KEYSTORE_B64: ${{ secrets.HFX_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEYSTORE_B64:-}" ]; then
+            echo "::error::缺少 Secret HFX_KEYSTORE_BASE64，无法签名"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/hfx-release.jks"
+          ls -l "$RUNNER_TEMP/hfx-release.jks"
+
+      - name: 'Build release APK'
+        working-directory: 'HybridFileXfer-Android'
+        env:
+          HFX_KEYSTORE: ${{ runner.temp }}/hfx-release.jks
+          HFX_KEYSTORE_PASSWORD: ${{ secrets.HFX_KEYSTORE_PASSWORD }}
+          HFX_KEY_ALIAS: ${{ secrets.HFX_KEY_ALIAS }}
+          HFX_KEY_PASSWORD: ${{ secrets.HFX_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          sudo chmod -R -- 0755 .
+          sudo "$(command -v bash || command -v sh)" -- ./gradlew assembleRelease --no-daemon
+
+      - name: 'Verify APK signature'
+        id: verify
+        run: |
+          set -euo pipefail
+          APK="$(find . -path '*/build/outputs/apk/release/*.apk' | head -n 1)"
+          if [ -z "$APK" ]; then
+            echo '::error::没有找到 release apk'
+            exit 1
+          fi
+          if [[ "$APK" == *unsigned* ]]; then
+            echo '::error::产出了未签名 apk，签名配置没有生效'
+            exit 1
+          fi
+          BT="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          "$BT/apksigner" verify --print-certs "$APK"
+          cp "$APK" app-release.apk
+
+      - name: 'Upload APK'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'android-apk'
+          path: 'app-release.apk'
+          if-no-files-found: 'error'
+
+  pc:
+    name: 'PC client'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tag || github.ref }}'
+          fetch-depth: 0
+
+      - name: 'Setup Java'
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: 21
+
+      - name: 'Compile jar'
+        run: |
+          set -euo pipefail
+          mkdir -p build/classes
+          # PC 源码只有 @NotNull 一处外部注解依赖（IntelliJ 自动注入），单独取一份
+          curl -fsSL -o annotations.jar \
+            https://repo1.maven.org/maven2/org/jetbrains/annotations/24.1.0/annotations-24.1.0.jar
+          find HybridFileXfer-PC/src -name '*.java' > sources.txt
+          javac -encoding UTF-8 -cp annotations.jar -d build/classes @sources.txt
+          cp HybridFileXfer-PC/src/*.properties build/classes/
+          jar --create --file build/HybridFileXfer.jar \
+              --main-class top.weixiansen574.hybridfilexfer.Main -C build/classes .
+          ls -l build/HybridFileXfer.jar
+
+      - name: 'Package zip'
+        run: |
+          set -euo pipefail
+          DIST=dist/HybridFileXfer-PC
+          mkdir -p "$DIST"
+          cp build/HybridFileXfer.jar "$DIST/"
+          cp HybridFileXfer-PC/adb.exe \
+             HybridFileXfer-PC/AdbWinApi.dll \
+             HybridFileXfer-PC/AdbWinUsbApi.dll \
+             HybridFileXfer-PC/start.exe \
+             "$DIST/"
+          cp script/launch-android-app.bat \
+             script/start-by-adb.bat \
+             script/start-by-network.bat \
+             script/USB-forward.bat \
+             script/USB-forward_中文.bat \
+             script/USB-forward.sh \
+             "$DIST/"
+          (cd dist && zip -r -9 ../HybridFileXfer-PC.zip HybridFileXfer-PC)
+          ls -l HybridFileXfer-PC.zip
+
+      - name: 'Upload PC zip'
+        uses: actions/upload-artifact@v4
+        with:
+          name: 'pc-zip'
+          path: 'HybridFileXfer-PC.zip'
+          if-no-files-found: 'error'
+
+  release:
+    name: 'Publish release'
+    needs: [android, pc]
+    runs-on: ubuntu-latest
+    steps:
+      - name: 'Checkout'
+        uses: actions/checkout@v4
+        with:
+          ref: '${{ github.event.inputs.tag || github.ref }}'
+          fetch-depth: 0
+
+      - name: 'Download artifacts'
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: 'Publish release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          APK="$(find artifacts -name 'app-release.apk' | head -n 1)"
+          ZIP="$(find artifacts -name 'HybridFileXfer-PC.zip' | head -n 1)"
+          if [ -z "$APK" ] || [ -z "$ZIP" ]; then
+            echo '::error::缺少构建产物'
+            exit 1
+          fi
+          # 标签注释作为更新日志；没有注释则交给 gh 自动生成
+          NOTES="$(git tag -l --format='%(contents)' "$TAG" | sed '/^$/d')"
+          if [ -n "$NOTES" ]; then
+            gh release create "$TAG" "$APK" "$ZIP" --title "$TAG" --notes "$NOTES" --verify-tag
+          else
+            gh release create "$TAG" "$APK" "$ZIP" --title "$TAG" --generate-notes --verify-tag
+          fi
