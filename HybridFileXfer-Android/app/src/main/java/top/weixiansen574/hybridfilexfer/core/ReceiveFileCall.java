@@ -62,7 +62,6 @@ public class ReceiveFileCall implements Callable<Void> {
                             }
                             connection.addDownloadedBytes(read);
                         }
-                        channel.readFully(buffer);
                         writeFileCall.putBlock(new FileBlock(true, fileIndex, path, lastModified, totalSize, index, buffer), tIndex);
                         break;
                     }

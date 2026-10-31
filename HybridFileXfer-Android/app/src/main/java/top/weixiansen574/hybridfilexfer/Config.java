@@ -32,16 +32,21 @@ public class Config {
         return 5740;
     }
 
+    /**
+     * 缓冲区块数。块大小已从 1MB 提升到 2MB，这里同步减半，
+     * 保证总内存预算不变（128 x 2MB = 256MB）。
+     */
     public int getLocalBufferCount() {
-        return preferences.getInt("local_buffer_count",256);
+        return preferences.getInt("local_buffer_count",128);
     }
 
     public void setLocalBufferCount(int count){
         preferences.edit().putInt("local_buffer_count",count).apply();
     }
 
+    /** 同上：256 x 2MB = 512MB，与改造前的 512 x 1MB 等价 */
     public int getRemoteBufferCount() {
-        return preferences.getInt("remote_buffer_count",512);
+        return preferences.getInt("remote_buffer_count",256);
     }
 
     public void setRemoteBufferCount(int count){

@@ -95,16 +95,26 @@ public class HFXServer extends HFXService {
                     ctChannel.write(bAddress);//地址
                 }
             }
-            //连接传输通道
-            connections = new ArrayList<>(interfaceList.size());
-            for (int i = 0; i < interfaceList.size(); i++) {
+            //对端逐张网卡告知开几条连接（303 协议：从单一倍数改为按网卡下发）
+            int[] perInterface = new int[interfaceList.size()];
+            int totalConnections = 0;
+            for (int i = 0; i < perInterface.length; i++) {
+                perInterface[i] = ctChannel.readInt();
+                if (perInterface[i] < 1) {
+                    perInterface[i] = 1;
+                }
+                totalConnections += perInterface[i];
+            }
+            //连接传输通道：按对端发来的顺序 accept，总数等于各网卡连接数之和
+            connections = new ArrayList<>(totalConnections);
+            for (int i = 0; i < totalConnections; i++) {
                 //对方连接通道是否成功
                 boolean succeed = ctChannel.readBoolean();
                 //对方所连接通道的名称（由控制器通道发送名称）
                 String name = ctChannel.readUTF();
                 if (succeed) {
                     //accept通道
-                    connections.add(new TransferConnection(name, new DataByteChannel(serverSocketChannel.accept())));
+                    connections.add(new TransferConnection(name, serverSocketChannel.accept()));
                     ctChannel.writeBoolean(true);
                     callback.onAccepted(name);
                 } else {

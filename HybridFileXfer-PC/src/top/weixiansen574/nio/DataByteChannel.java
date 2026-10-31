@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
     private final ByteChannel origin;
     private final ByteBuffer buffer = ByteBuffer.allocate(8);
+    /** 块头打包缓冲，跨块复用，避免每块都分配 */
+    private ByteBuffer headerBuffer = ByteBuffer.allocate(256);
 
     public DataByteChannel(ByteChannel origin) {
         this.origin = origin;
@@ -138,6 +140,49 @@ public class DataByteChannel implements ByteChannel, DataInput, DataOutput {
     @Override
     public void write(int b) throws IOException {
         writeByte(b);
+    }
+
+    /**
+     * 把一个块的全部头字段打成一个连续的 buffer，一次写出。
+     * <p>
+     * 原来的写法是 {@code writeShort + writeInt + writeUTF + writeLong + ...}，
+     * 每个字段都单独调一次 {@code origin.write()}，也就是每个块 7~9 次系统调用。
+     * 更要命的是这 7 个写出都是远小于 MSS 的小包：没关 Nagle 时第 2 个包开始
+     * 会被扣住等前一个的 ACK，等于在每个块的边界上白等一个 RTT。
+     * <p>
+     * 线上字节序列与原写法逐字节相同，协议不变。
+     */
+    public void writeBlockHeader(int type, int fileIndex, String path, long lastModified,
+                                 boolean hasPayload, long totalSize, int index, int length)
+            throws IOException {
+        byte[] pathBytes = path.getBytes(StandardCharsets.UTF_8);
+        if (pathBytes.length > 65535) {
+            throw new IOException("String too long");
+        }
+        int need = 2 + 4 + 2 + pathBytes.length + 8 + (hasPayload ? 8 + 4 + 4 : 0);
+        ByteBuffer b = headerBuffer;
+        if (b.capacity() < need) {
+            b = ByteBuffer.allocate(Integer.highestOneBit(need) << 1);
+            headerBuffer = b;
+        }
+        b.clear();
+        b.putShort((short) type);
+        b.putInt(fileIndex);
+        b.putShort((short) pathBytes.length);
+        b.put(pathBytes);
+        b.putLong(lastModified);
+        if (hasPayload) {
+            b.putLong(totalSize);
+            b.putInt(index);
+            b.putInt(length);
+        }
+        b.flip();
+        while (b.hasRemaining()) {
+            int n = origin.write(b);
+            if (n <= 0) {
+                throw new IOException("channel closed while writing block header");
+            }
+        }
     }
 
     @Override
