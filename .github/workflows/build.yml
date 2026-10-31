@@ -31,7 +31,7 @@ jobs:
         uses: android-actions/setup-android@v3
         with:
           log-accepted-android-sdk-licenses: false
-          packages: 'tools platform-tools cmake;3.10.2.4988404'
+          packages: 'platform-tools cmake;3.10.2.4988404'
 
       - name: 'Build with Gradle'
         working-directory: 'HybridFileXfer-Android'
