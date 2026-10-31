@@ -64,8 +64,9 @@ jobs:
           HFX_KEY_PASSWORD: ${{ secrets.HFX_KEY_PASSWORD }}
         run: |
           set -euo pipefail
-          sudo chmod -R -- 0755 .
-          sudo "$(command -v bash || command -v sh)" -- ./gradlew assembleRelease --no-daemon
+          # 不能用 sudo：env_reset 会清掉 HFX_KEYSTORE 等变量，签名直接失效
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon
 
       - name: 'Verify APK signature'
         id: verify

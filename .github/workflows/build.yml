@@ -36,8 +36,8 @@ jobs:
       - name: 'Build with Gradle'
         working-directory: 'HybridFileXfer-Android'
         run: |
-          sudo chmod -R -- 0755 .
-          sudo "$(command -v bash || command -v sh)" -- ./gradlew build
+          chmod +x gradlew
+          ./gradlew build
 
       - name: 'Upload release apk'
         if: '${{ success() }}'
