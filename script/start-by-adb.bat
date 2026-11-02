@@ -65,6 +65,6 @@ set "selectedDevID=!dev_%num_choice%!"
 echo 您选择的设备ID是：%selectedDevID%
 
 :: 运行java命令，带上 -s 选项指定设备
-java -jar -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 HybridFileXfer.jar -c adb -s %selectedDevID%
+java -Dfile.encoding=UTF-8 -Dsun.stdout.encoding=UTF-8 -Dsun.stderr.encoding=UTF-8 -jar "%~dp0HybridFileXfer.jar" -c adb -s "%selectedDevID%" --launch-phone --wait
 
 pause

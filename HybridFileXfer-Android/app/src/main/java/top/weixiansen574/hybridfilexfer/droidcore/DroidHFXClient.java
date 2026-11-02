@@ -4,6 +4,7 @@ import android.app.ActivityManager;
 import android.content.Context;
 
 import java.nio.ByteBuffer;
+import top.weixiansen574.hybridfilexfer.core.TransferFileAccess;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingDeque;
 
@@ -71,9 +72,10 @@ public class DroidHFXClient extends HFXClient {
     }
 
     public void freeBuffers(){
-        for (ByteBuffer buffer : buffers) {
-            NativeMemory.freeBuffer(buffer);
-        }
         buffers.clear();
     }
+    @Override protected TransferFileAccess createFileAccess() {
+        return new DroidTransferFileAccess(iioService);
+    }
+
 }

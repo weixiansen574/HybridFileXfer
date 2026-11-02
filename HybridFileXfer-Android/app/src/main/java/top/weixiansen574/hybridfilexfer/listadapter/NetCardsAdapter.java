@@ -60,6 +60,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
 
         holder.editClientBindIP.setEnabled(enableModify && enableBindIpInput);
         holder.cbEnable.setEnabled(enableModify);
+        holder.cbEnable.setOnCheckedChangeListener(null);
         holder.cbEnable.setChecked(itemServerNetInterface.enable);
 
 
@@ -67,9 +68,10 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
             itemServerNetInterface.enable = isChecked;
         });
 
+        if (holder.bindIpWatcher != null) holder.editClientBindIP.removeTextChangedListener(holder.bindIpWatcher);
         holder.editClientBindIP.setText(itemServerNetInterface.clientBindAddress);
 
-        holder.editClientBindIP.addTextChangedListener(new TextWatcher() {
+        holder.bindIpWatcher = new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {
 
@@ -84,7 +86,8 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
             public void afterTextChanged(Editable s) {
 
             }
-        });
+        };
+        holder.editClientBindIP.addTextChangedListener(holder.bindIpWatcher);
 
     }
 
@@ -149,6 +152,7 @@ public class NetCardsAdapter extends RecyclerView.Adapter<NetCardsAdapter.ViewHo
 
 
     public static class ViewHolder extends RecyclerView.ViewHolder {
+        TextWatcher bindIpWatcher;
         CheckBox cbEnable;
         TextView txvNameAndState;
         TextView txvIP;

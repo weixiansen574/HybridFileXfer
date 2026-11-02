@@ -41,7 +41,10 @@ import top.weixiansen574.hybridfilexfer.tasks.BTransferFileCallback;
 import top.weixiansen574.hybridfilexfer.tasks.SendFilesToRemoteTask;
 import top.weixiansen574.hybridfilexfer.tasks.SendFilesToShelfTask;
 
-public class TransferActivity extends AppCompatActivity {
+public class TransferActivity extends AppCompatActivity implements TransferSession.Listener {
+    private TransferSession transferSession;
+    private TransferDialog transferDialog;
+    private boolean refreshedAfterTransfer;
     private boolean isLeftFocus = true;
     private Activity context;
     //private HFXServer server;
@@ -107,36 +110,116 @@ public class TransferActivity extends AppCompatActivity {
         rightList.setLayoutAnimation(layoutAnimationController);
         rightList.setOnTouchListener(onTouchListener);
 
-        leftRVAdapter.setOnToTransferListener((selectedItems, dir) -> new AlertDialog.Builder(context)
-                .setTitle(R.string.que_ren_chuan_shu)
-                .setMessage(getString(R.string.chuan_shu_dao_dian_nao_mu_lu, selectedItems.size(), rightRVAdapter.getCurrentDir()))
-                .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    leftRVAdapter.cancelSelect();
-                    sendFilesToRemote(selectedItems, dir, rightRVAdapter.getCurrentDirectory());
-                })
+        leftRVAdapter.setOnToTransferListener((files, dir) -> confirmTransfer(true, files, dir, rightRVAdapter.getCurrentDirectory()));
+        rightRVAdapter.setOnToTransferListener((files, dir) -> confirmTransfer(false, files, leftRVAdapter.getCurrentDirectory(), dir));
+        findViewById(R.id.transfer_to_remote).setOnClickListener(v -> leftRVAdapter.confirmSelection());
+        findViewById(R.id.transfer_to_local).setOnClickListener(v -> rightRVAdapter.confirmSelection());
+        TransferSession existing = TransferSession.current();
+        if (existing != null && !existing.acknowledged) {
+            transferSession = existing;
+            transferSession.attach(this);
+        }
+    }
+
+    private void confirmTransfer(boolean upload, List<RemoteFile> files, Directory local, Directory remote) {
+        if (!leftRVAdapter.isDirectoryReady() || !rightRVAdapter.isDirectoryReady()) {
+            Toast.makeText(this, R.string.wait_for_folders, Toast.LENGTH_LONG).show();
+            return;
+        }
+        if (server != HFXServer.instance) {
+            Toast.makeText(this, R.string.session_changed, Toast.LENGTH_LONG).show();
+            finish();
+            return;
+        }
+        if (TransferSession.current() != null && TransferSession.current().running) {
+            Toast.makeText(this, R.string.transfer_already_running, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        android.widget.LinearLayout form = new android.widget.LinearLayout(this);
+        form.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int padding = (int) (20 * getResources().getDisplayMetrics().density);
+        form.setPadding(padding, 0, padding, 0);
+        android.widget.TextView destination = new android.widget.TextView(this);
+        destination.setText(getString(upload ? R.string.chuan_shu_dao_dian_nao_mu_lu : R.string.chuan_shu_dao_shou_ji_mu_lu,
+                files.size(), upload ? remote.path : local.path));
+        form.addView(destination);
+        android.widget.Spinner policy = new android.widget.Spinner(this);
+        policy.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item,
+                getResources().getStringArray(R.array.conflict_policies)));
+        form.addView(policy);
+        android.widget.CheckBox verify = new android.widget.CheckBox(this);
+        verify.setText(R.string.verify_sha256); verify.setChecked(false); form.addView(verify);
+        android.widget.TextView verificationHint = new android.widget.TextView(this);
+        verificationHint.setText(R.string.verify_sha256_description);
+        form.addView(verificationHint);
+        android.widget.CheckBox resume = new android.widget.CheckBox(this);
+        resume.setText(R.string.resume_verified); resume.setChecked(true); form.addView(resume);
+        android.widget.CheckBox incremental = new android.widget.CheckBox(this);
+        incremental.setText(R.string.incremental_transfer); form.addView(incremental);
+        android.widget.CheckBox prescan = new android.widget.CheckBox(this);
+        prescan.setText(R.string.prescan_transfer); form.addView(prescan);
+        new AlertDialog.Builder(this).setTitle(R.string.que_ren_chuan_shu).setView(form)
                 .setNegativeButton(R.string.cancel, null)
-                .show());
-        rightRVAdapter.setOnToTransferListener((selectedItems, dir) -> new AlertDialog.Builder(context)
-                .setTitle(R.string.que_ren_chuan_shu)
-                .setMessage(getString(R.string.chuan_shu_dao_shou_ji_mu_lu, selectedItems.size(), leftRVAdapter.getCurrentDir()))
                 .setPositiveButton(R.string.ok, (dialog, which) -> {
-                    rightRVAdapter.cancelSelect();
-                    sendFilesToShelf(selectedItems, leftRVAdapter.getCurrentDirectory(), dir);
-                })
-                .setNegativeButton(R.string.cancel, null)
-                .show());
+                    if (server != HFXServer.instance) {
+                        Toast.makeText(this, R.string.session_changed, Toast.LENGTH_LONG).show();
+                        finish();
+                        return;
+                    }
+                    top.weixiansen574.hybridfilexfer.core.TransferOptions options = new top.weixiansen574.hybridfilexfer.core.TransferOptions();
+                    top.weixiansen574.hybridfilexfer.core.TransferOptions.ConflictPolicy[] policies = {
+                        top.weixiansen574.hybridfilexfer.core.TransferOptions.ConflictPolicy.KEEP_BOTH,
+                        top.weixiansen574.hybridfilexfer.core.TransferOptions.ConflictPolicy.SKIP,
+                        top.weixiansen574.hybridfilexfer.core.TransferOptions.ConflictPolicy.OVERWRITE};
+                    options.conflictPolicy = policies[policy.getSelectedItemPosition()];
+                    options.verifySha256 = verify.isChecked();
+                    options.resume = resume.isChecked();
+                    options.incremental = incremental.isChecked();
+                    options.prescan = prescan.isChecked();
+                    leftRVAdapter.cancelSelect(); rightRVAdapter.cancelSelect();
+                    refreshedAfterTransfer = false;
+                    transferSession = TransferSession.start(this, server, upload, files, local, remote, options);
+                    transferSession.attach(this);
+                }).show();
     }
 
-    private void sendFilesToRemote(List<RemoteFile> files, Directory localDir, Directory remoteDir) {
-        TransferDialogHandler handler = new TransferDialogHandler(context, true, server.getConnectionListINames(), rightRVAdapter);
-        new SendFilesToRemoteTask(handler, server, files, localDir, remoteDir).execute();
+    @Override public void onTransferChanged() {
+        if (isFinishing() || isDestroyed() || transferSession == null) return;
+        if (transferDialog == null) {
+            transferDialog = new TransferDialog(this, transferSession.upload, transferSession.channelNames);
+            transferDialog.show();
+            transferDialog.setOnCancel(transferSession::cancel);
+            transferDialog.getDialog().setOnDismissListener(dialog -> {
+                if (!transferSession.running) transferSession.acknowledged = true;
+                transferDialog = null;
+            });
+        }
+        for (java.util.Map.Entry<String, String> event : transferSession.events.entrySet()) {
+            transferDialog.showEvent(event.getKey(), event.getValue());
+        }
+        if (transferSession.running) {
+            transferDialog.showSpeeds(transferSession.speeds);
+            if (transferSession.verification.active()) {
+                transferDialog.setOnCancel(transferSession::stopVerification);
+                transferDialog.showVerification(transferSession.verification.progress(),
+                        transferSession.verification.stopping());
+            } else {
+                transferDialog.showProgress(transferSession.progress, transferSession.status);
+            }
+        } else {
+            transferDialog.complete(transferSession.upload, transferSession.traffic, transferSession.elapsed);
+            transferDialog.showResult(transferSession.resultText());
+            if (HFXServer.instance != server) {
+                transferDialog.setButton(getString(R.string.return_to_main), v -> finish());
+            }
+            if (!refreshedAfterTransfer) {
+                refreshedAfterTransfer = true;
+                if (HFXServer.instance == server) {
+                    leftRVAdapter.refresh(); rightRVAdapter.refresh();
+                }
+            }
+        }
     }
-
-    private void sendFilesToShelf(List<RemoteFile> selectedItems, Directory localDir, Directory remoteDir) {
-        TransferDialogHandler handler = new TransferDialogHandler(context, false, server.getConnectionListINames(), leftRVAdapter);
-        new SendFilesToShelfTask(handler, server, selectedItems, localDir, remoteDir).execute();
-    }
-
 
     public void switchTo(boolean isLeft) {
         if (isLeft) {
@@ -172,6 +255,18 @@ public class TransferActivity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(@NonNull MenuItem item) {
         int id = item.getItemId();
+        if (id == R.id.transfer_history) {
+            java.util.List<String> entries = LocalHistory.read(this, "transfers");
+            new AlertDialog.Builder(this).setTitle(R.string.transfer_history)
+                    .setMessage(entries.isEmpty() ? getString(R.string.history_empty) : android.text.TextUtils.join("\n\n", entries))
+                    .setPositiveButton(R.string.close, null)
+                    .setNeutralButton(R.string.clear_history, (d, w) -> LocalHistory.clear(this)).show();
+            return true;
+        }
+        if (id == R.id.recent_directories || id == R.id.storage_locations) {
+            showLocations(id == R.id.storage_locations);
+            return true;
+        }
         if (id == android.R.id.home) {
             finish();
             return true;
@@ -279,6 +374,40 @@ public class TransferActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void showLocations(boolean storage) {
+        java.util.List<String> paths = new java.util.ArrayList<>();
+        if (storage && isLeftFocus) {
+            paths.add(android.os.Environment.getExternalStorageDirectory().getAbsolutePath());
+            for (java.io.File directory : getExternalFilesDirs(null)) {
+                if (directory == null) continue;
+                String path = directory.getAbsolutePath();
+                int marker = path.indexOf("/Android/data/");
+                if (marker > 0 && !paths.contains(path.substring(0, marker))) paths.add(path.substring(0, marker));
+            }
+            if (android.os.Build.VERSION.SDK_INT >= 30) {
+                android.os.storage.StorageManager manager = getSystemService(android.os.storage.StorageManager.class);
+                for (android.os.storage.StorageVolume volume : manager.getStorageVolumes()) {
+                    java.io.File directory = volume.getDirectory();
+                    if (directory != null && !paths.contains(directory.getAbsolutePath())) paths.add(directory.getAbsolutePath());
+                }
+            }
+            if (Config.getInstance(this).getMode() != Config.MODE_NORMAL) paths.add("/");
+        } else if (storage) {
+            paths.add(server.getRemoteHomeDir());
+            if (!paths.contains("/")) paths.add("/");
+        } else {
+            paths.addAll(LocalHistory.read(this, isLeftFocus ? "local_dirs" : "remote_dirs"));
+        }
+        if (paths.isEmpty()) {
+            Toast.makeText(this, R.string.history_empty, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        FileSelectAdapter target = isLeftFocus ? leftRVAdapter : rightRVAdapter;
+        new AlertDialog.Builder(this).setTitle(storage ? R.string.storage_locations : R.string.recent_directories)
+                .setItems(paths.toArray(new String[0]), (dialog, which) -> target.jump(paths.get(which)))
+                .setNegativeButton(R.string.cancel, null).show();
+    }
+
     private void addBookmark(boolean isRemote, String path) {
         boolean exists;
         ConfigDB configDB = ConfigDB.getInstance(context);
@@ -330,111 +459,22 @@ public class TransferActivity extends AppCompatActivity {
         }
     }
 
-    private static class TransferDialogHandler implements BTransferFileCallback {
-        Activity context;
-        TransferDialog transferDialog;
-        FileSelectAdapter adapter;
+    @Override protected void onStart() {
+        super.onStart();
+        if (transferSession != null && !transferSession.acknowledged) transferSession.attach(this);
+    }
+    @Override protected void onStop() {
+        if (transferSession != null) transferSession.detach(this);
+        super.onStop();
+    }
 
-        public TransferDialogHandler(Activity context, boolean isUpload, List<String> channelNames, FileSelectAdapter adapter) {
-            this.context = context;
-            this.adapter = adapter;
-            transferDialog = new TransferDialog(context, isUpload, channelNames);
-            transferDialog.show();
-        }
-
-        @Override
-        public void onFileUploading(String iName, String path, long targetSize, long totalSize) {
-            transferDialog.showEvent(iName, String.format("▲ [%s/%s] %s",
-                    Utils.formatFileSize(targetSize),
-                    Utils.formatFileSize(totalSize),
-                    path));
-        }
-
-        @Override
-        public void onFileDownloading(String iName, String path, long targetSize, long totalSize) {
-            transferDialog.showEvent(iName, String.format("▼ [%s/%s] %s",
-                    Utils.formatFileSize(targetSize),
-                    Utils.formatFileSize(totalSize),
-                    path));
-        }
-
-        @Override
-        public void onSpeedInfo(List<TrafficInfo> trafficInfoList) {
-            transferDialog.showSpeeds(trafficInfoList);
-        }
-
-
-        @Override
-        public void onChannelComplete(String iName, long traffic, long time) {
-            transferDialog.showEvent(iName, String.format("传输完毕！平均速度：%s",
-                    time == 0 ? "∞" : Utils.formatSpeed(traffic / time * 1000)));
-        }
-
-        @Override
-        public void onChannelError(String iName, int errorType, String message) {
-            switch (errorType) {
-                case TransferFileCallback.ERROR_TYPE_EXCEPTION:
-                    transferDialog.showEvent(iName, message);
-                    break;
-                case TransferFileCallback.ERROR_TYPE_INTERRUPT:
-                    transferDialog.showEvent(iName, context.getString(R.string.transmission_interrupted));
-                    break;
-                case TransferFileCallback.ERROR_TYPE_READ_ERROR:
-                    transferDialog.showEvent(iName, "读取文件时出错");
-                    break;
-                case TransferFileCallback.ERROR_TYPE_WRITE_ERROR:
-                    transferDialog.showEvent(iName, "写入文件时出错");
-                    break;
-            }
-        }
-
-        @Override
-        public void onReadFileError(String message) {
-            transferDialog.setTitle("传输失败");
-            transferDialog.setCloseBtnEnable(true);
-            new AlertDialog.Builder(context)
-                    .setTitle("读取文件时发生错误")
-                    .setMessage(message)
-                    .setPositiveButton(R.string.ok, null)
-                    .show();
-        }
-
-        @Override
-        public void onWriteFileError(String message) {
-            transferDialog.setTitle("传输失败");
-            transferDialog.setCloseBtnEnable(true);
-            new AlertDialog.Builder(context)
-                    .setTitle("写入文件时发生错误")
-                    .setMessage(message)
-                    .setPositiveButton(R.string.ok, null)
-                    .show();
-        }
-
-        @Override
-        public void onComplete(boolean isUpload, long traffic, long time) {
-            //文件传输完成，平均总速度：
-            transferDialog.complete(isUpload, traffic, time);
-            adapter.refresh();
-        }
-
-        @Override
-        public void onIncomplete() {
-            Toast.makeText(context, R.string.chuan_shu_shi_fa_sheng_yi_chang, Toast.LENGTH_LONG).show();
-            transferDialog.setCloseBtnEnable(true);
-            transferDialog.setButton(context.getString(R.string.exit), v -> context.finish());
-            context.setResult(MainActivity.RESULT_CODE_SERVER_DISCONNECT);
-        }
-
-        @Override
-        public void onError(Throwable th) {
+    @Override protected void onDestroy() {
+        if (transferSession != null) transferSession.detach(this);
+        if (transferDialog != null) {
+            transferDialog.getDialog().setOnDismissListener(null);
             transferDialog.dismiss();
-            new AlertDialog.Builder(context)
-                    .setTitle("发生错误")
-                    .setMessage(th.toString())
-                    .setPositiveButton(R.string.ok, null)
-                    .setOnDismissListener(dialog -> context.finish())
-                    .show();
         }
+        super.onDestroy();
     }
 
     @Override

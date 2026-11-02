@@ -1,112 +1,38 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".MainActivity">
-
-    <androidx.cardview.widget.CardView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp">
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="10dp">
-
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:layout_width="match_parent"
-                android:layout_height="40dp">
-
-                <TextView
-                    android:id="@+id/textView2"
-                    android:layout_width="wrap_content"
-                    android:minWidth="60dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="@string/conn"
-                    android:textColor="@color/fond"
-                    android:textSize="22sp"
-                    app:layout_constraintStart_toStartOf="parent" />
-
-                <TextView
-                    android:id="@+id/textView"
-                    android:layout_width="wrap_content"
-                    android:minWidth="60dp"
-                    android:layout_height="match_parent"
-                    android:gravity="center"
-                    android:text="@string/mode_"
-                    android:textColor="@color/fond"
-                    android:textSize="16sp"
-                    app:layout_constraintStart_toEndOf="@+id/textView2" />
-
-                <Spinner
-                    android:id="@+id/spinner_mode"
-                    android:layout_width="wrap_content"
-                    android:layout_height="match_parent"
-                    android:entries="@array/select_mode"
-                    app:layout_constraintStart_toEndOf="@+id/textView" />
-
-                <LinearLayout
-                    android:id="@+id/refresh"
-                    android:layout_width="wrap_content"
-                    android:layout_height="30dp"
-                    android:clickable="true"
-                    android:focusable="true"
-                    android:foreground="?selectableItemBackground"
-                    app:layout_constraintBottom_toBottomOf="parent"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintTop_toTopOf="parent">
-
-                    <ImageView
-                        android:layout_width="25dp"
-                        android:layout_height="25dp"
-                        android:layout_gravity="center_vertical"
-                        android:src="@drawable/baseline_refresh_24" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_gravity="center_vertical"
-                        android:text="@string/refresh" />
-                </LinearLayout>
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
-
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/rec_view_net_cards"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
-            <Button
-                android:id="@+id/start_server"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="@string/start_service_and_wait_onnect" />
-
-            <Button
-                android:id="@+id/to_transfer"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:enabled="false"
-                android:text="@string/transfer_files" />
-           <!-- <Button
-                android:id="@+id/test"
-                style="@style/Widget.AppCompat.Button.Colored"
-                android:layout_width="match_parent"
-                android:layout_height="50dp"
-                android:text="测试" />-->
-
+<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent" android:layout_margin="8dp">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="match_parent"
+        android:orientation="vertical" android:padding="10dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:gravity="center_vertical" android:orientation="horizontal">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="@string/mode_" android:textColor="@color/fond" android:textSize="16sp" />
+            <Spinner android:id="@+id/spinner_mode" android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="48dp" android:entries="@array/select_mode" />
         </LinearLayout>
-
-
-
-    </androidx.cardview.widget.CardView>
-
-</LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:layout_width="0dp" android:layout_weight="1" android:layout_height="wrap_content"
+                android:text="@string/connection_channels" android:textColor="@color/fond" />
+            <LinearLayout android:id="@+id/refresh" android:layout_width="wrap_content"
+                android:layout_height="48dp" android:gravity="center_vertical" android:paddingStart="8dp" android:paddingEnd="8dp"
+                android:clickable="true" android:focusable="true" android:foreground="?selectableItemBackground">
+                <ImageView android:layout_width="24dp" android:layout_height="24dp"
+                    android:contentDescription="@string/refresh" android:src="@drawable/baseline_refresh_24" />
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="@string/refresh" />
+            </LinearLayout>
+        </LinearLayout>
+        <androidx.recyclerview.widget.RecyclerView android:id="@+id/rec_view_net_cards"
+            android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" />
+        <TextView android:id="@+id/session_details" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:padding="8dp" android:textIsSelectable="true"
+            android:saveEnabled="false" android:textColor="@color/fond" />
+        <Button android:id="@+id/start_server" style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:minHeight="48dp" android:text="@string/start_service_and_wait_onnect" />
+        <Button android:id="@+id/to_transfer" style="@style/Widget.AppCompat.Button.Colored"
+            android:layout_width="match_parent" android:layout_height="wrap_content" android:minHeight="48dp"
+            android:enabled="false" android:text="@string/transfer_files" />
+    </LinearLayout>
+</androidx.cardview.widget.CardView>

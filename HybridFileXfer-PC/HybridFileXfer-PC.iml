@@ -7,6 +7,15 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
+    <orderEntry type="module-library">
+      <library name="FlatLaf 3.7.2">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/../.tools/dependencies/flatlaf-3.7.2.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
     <orderEntry type="library" name="annotations" level="application" />
     <orderEntry type="library" name="annotations-24.0.1" level="project" />
   </component>

@@ -6,6 +6,8 @@ import android.content.SharedPreferences;
 public class Config {
     public static final int MODE_NORMAL = 0;
     public static final int MODE_ROOT = 1;
+    public static final int MODE_ADB = 2;
+    public static final int MODE_ROOT_SU = 3;
     private static Config instance;
     SharedPreferences preferences;
 
@@ -29,7 +31,11 @@ public class Config {
     }
 
     public int getServerPort() {
-        return 5740;
+        return preferences.getInt("server_port", 5740);
+    }
+
+    public void setServerPort(int port) {
+        preferences.edit().putInt("server_port", port).apply();
     }
 
     public int getLocalBufferCount() {
