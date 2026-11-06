@@ -71,40 +71,49 @@ public abstract class HFXClient extends HFXService {
             addresses[i] = inetAddress;
             bindAddresses[i] = bindAddress;
         }
-        connections = new ArrayList<>(ipCount);
+        // 逐张网卡下发连接数，服务端按同样顺序读完再照着 accept。策略在 connectionsFor 里。
+        final int[] perInterface = new int[ipCount];
+        int totalConnections = 0;
+        for (int i = 0; i < ipCount; i++) {
+            perInterface[i] = connectionsFor(names[i]);
+            totalConnections += perInterface[i];
+        }
+        for (int i = 0; i < ipCount; i++) {
+            ctChannel.writeInt(perInterface[i]);
+        }
+
+        connections = new ArrayList<>(totalConnections);
         for (int i = 0; i < ipCount; i++) {
             SocketChannel socketChannel;
             String name = names[i];
             InetAddress inetAddress = addresses[i];
             InetAddress bindAddress = bindAddresses[i];
-            /*System.out.printf("正在连接 网卡名：%s 远程地址：%s 绑定地址：%s\n", name, inetAddress.getHostAddress(), bindAddress == null ?
-                    "null" : bindAddress.getHostAddress());*/
-            callback.onConnectingTransferChannel(name, inetAddress, bindAddress);
-            /*if (name.equals("USB_ADB") && !serverControllerAddress.equals("127.0.0.1")) {
-                System.err.println("错误：你在手机上选用了USB_ADB网卡，但没有使用ADB进行连接");
-                ctChannel.writeBoolean(false);
-                socket.close();
-                return false;
-            }*/
-            try {
-                if (bindAddress == null) {
-                    socketChannel = SocketChannel.open(new InetSocketAddress(inetAddress, serverPort));
-                } else {
-                    socketChannel = SocketChannel.open();
-                    socketChannel.bind(new InetSocketAddress(bindAddress, 0));
-                    socketChannel.connect(new InetSocketAddress(inetAddress, serverPort));
+            for (int j = 0; j < perInterface[i]; j++) {
+                // 同一张网卡的第 2 条起加后缀，用于在 UI 上区分，也作为合并队列的索引依据
+                String connName = j == 0 ? name : name + "#" + (j + 1);
+                if (j == 0) {
+                    callback.onConnectingTransferChannel(name, inetAddress, bindAddress);
                 }
-                connections.add(new TransferConnection(name, new DataByteChannel(socketChannel)));
-            } catch (IOException e) {
-                callback.onConnectTransferChannelFailed(name,inetAddress, e);
-                ctChannel.writeBoolean(false);
-                ctChannel.writeUTF(name);
-                ctChannel.close();
-                return false;
+                try {
+                    if (bindAddress == null) {
+                        socketChannel = SocketChannel.open(new InetSocketAddress(inetAddress, serverPort));
+                    } else {
+                        socketChannel = SocketChannel.open();
+                        socketChannel.bind(new InetSocketAddress(bindAddress, 0));
+                        socketChannel.connect(new InetSocketAddress(inetAddress, serverPort));
+                    }
+                    connections.add(new TransferConnection(connName, socketChannel));
+                } catch (IOException e) {
+                    callback.onConnectTransferChannelFailed(name, inetAddress, e);
+                    ctChannel.writeBoolean(false);
+                    ctChannel.writeUTF(connName);
+                    ctChannel.close();
+                    return false;
+                }
+                ctChannel.writeBoolean(true);
+                ctChannel.writeUTF(connName);
+                ctChannel.readBoolean();
             }
-            ctChannel.writeBoolean(true);
-            ctChannel.writeUTF(name);
-            ctChannel.readBoolean();
         }
         //初始化缓冲区块
         int bufferCount = ctChannel.readInt();

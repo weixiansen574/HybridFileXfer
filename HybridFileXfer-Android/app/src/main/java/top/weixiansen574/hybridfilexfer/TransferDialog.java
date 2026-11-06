@@ -3,6 +3,9 @@ package top.weixiansen574.hybridfilexfer;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -22,11 +25,16 @@ import top.weixiansen574.hybridfilexfer.core.Utils;
 import top.weixiansen574.hybridfilexfer.core.bean.TrafficInfo;
 
 public class TransferDialog {
+    /** 进度文本最快更新间隔。传输线程每秒会产生上百次进度回调，全部推到 UI 线程没有意义 */
+    private static final long PROGRESS_INTERVAL_MS = 100;
+
     public final boolean isUpload;
     private final Map<String, Holder> holderMap;
     private final Context context;
     private final View dialogView;
     private AlertDialog dialog;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Map<String, Long> lastProgressTime = new HashMap<>();
 
 
     public TransferDialog(Context context, boolean isUpload, List<String> channelNames) {
@@ -66,6 +74,26 @@ public class TransferDialog {
 
     public void showEvent(String iName, String event) {
         Objects.requireNonNull(holderMap.get(iName)).transferEvent.setText(event);
+    }
+
+    /**
+     * 传输进度专用：所有进度文本都来自传输线程，直接 setText 会：
+     * 1) 让传输线程卡在 measure/layout 上（每块一次）；
+     * 2) 跨线程改 View，长度变化时触发 requestLayout，属于未定义行为。
+     * 这里改成投递到主线程 + 100ms 节流。
+     */
+    public void showProgress(String iName, String event) {
+        final Holder holder = holderMap.get(iName);
+        if (holder == null) {
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        Long last = lastProgressTime.get(iName);
+        if (last != null && now - last < PROGRESS_INTERVAL_MS) {
+            return;
+        }
+        lastProgressTime.put(iName, now);
+        mainHandler.post(() -> holder.transferEvent.setText(event));
     }
 
     public void showSpeeds(List<TrafficInfo> trafficInfoList) {

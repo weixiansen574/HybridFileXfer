@@ -44,8 +44,8 @@ public abstract class WriteFileCall implements Callable<Void> {
                     continue;
                 }
                 //创建文件的父目录，如果不存在，保证后续文件能够创建
-                createParentDirIfNotExists(block.path);
-                //RandomAccessFile raf;
+                //只在“换文件”时做一次：Android 端这是跨进程 binder 调用，原来每个块都调一次，
+                //一个 4GB 文件（2MB 块）就白跑 2000 次往返。
                 FileChannel channel;
                 //如果上个文件与当前
                 if (lastBlock == null || !lastBlock.path.equals(block.path)) {
@@ -53,6 +53,7 @@ public abstract class WriteFileCall implements Callable<Void> {
                         closeFile();
                         setLastModified(lastBlock.path, lastBlock.lastModified);
                     }
+                    createParentDirIfNotExists(block.path);
                     /*raf = new RandomAccessFile(file, "rw");
                     raf.setLength(block.totalSize);
                     channel = raf.getChannel();*/
@@ -74,7 +75,10 @@ public abstract class WriteFileCall implements Callable<Void> {
 
                 ByteBuffer data = block.data;
                 data.flip();
-                channel.write(data);
+                //FileChannel.write 不保证一次写完，单次调用在极端情况下会丢尾部数据
+                while (data.hasRemaining()) {
+                    channel.write(data);
+                }
                 cursor += data.position();
                 //回收缓冲区块
                 buffers.add(block.data);

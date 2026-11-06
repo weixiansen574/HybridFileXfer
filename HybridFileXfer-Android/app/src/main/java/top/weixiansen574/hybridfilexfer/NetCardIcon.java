@@ -4,7 +4,7 @@ public class NetCardIcon {
     public static int matchIdForIName(String iName){
         if (iName.startsWith("wlan")) {
             return R.drawable.wifi;
-        } else if (iName.equals("USB_ADB")) {
+        } else if (iName.startsWith("USB_ADB")) {
             return R.drawable.usb;
         } else if (iName.startsWith("rndis")) {
             return R.drawable.usb;

@@ -12,7 +12,10 @@ import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.SystemClock;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -49,6 +52,8 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
     TextView txvUploadSpeed, txvDownloadSpeed;
     LinearLayout lConnections;
     private final Map<String, Holder> holderMap = new HashMap<>();
+    private final Handler uiHandler = new Handler(Looper.getMainLooper());
+    private final Map<String, Long> lastProgressTime = new HashMap<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -203,7 +208,7 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
 
             @Override
             public void onFileUploading(String iName, String path, long targetSize, long totalSize) {
-                showEvent(iName, String.format("▲ [%s/%s] %s",
+                showProgress(iName, String.format("▲ [%s/%s] %s",
                         Utils.formatFileSize(targetSize),
                         Utils.formatFileSize(totalSize),
                         path));
@@ -211,7 +216,7 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
 
             @Override
             public void onFileDownloading(String iName, String path, long targetSize, long totalSize) {
-                showEvent(iName, String.format("▼ [%s/%s] %s",
+                showProgress(iName, String.format("▼ [%s/%s] %s",
                         Utils.formatFileSize(targetSize),
                         Utils.formatFileSize(totalSize),
                         path));
@@ -299,6 +304,24 @@ public class ClientActivity extends AppCompatActivity implements ServiceConnecti
     private void showEvent(String iName, String event) {
         Objects.requireNonNull(holderMap.get(iName))
                 .transferEvent.setText(event);
+    }
+
+    /**
+     * 传输进度：投递到主线程 + 100ms 节流。
+     * 原来是在传输线程里逐块 String.format + setText，会直接把网络线程拖住。
+     */
+    private void showProgress(String iName, String event) {
+        final Holder holder = holderMap.get(iName);
+        if (holder == null) {
+            return;
+        }
+        long now = SystemClock.elapsedRealtime();
+        Long last = lastProgressTime.get(iName);
+        if (last != null && now - last < 100) {
+            return;
+        }
+        lastProgressTime.put(iName, now);
+        uiHandler.post(() -> holder.transferEvent.setText(event));
     }
 
     private void dialogErrorMessage(String title, String message) {

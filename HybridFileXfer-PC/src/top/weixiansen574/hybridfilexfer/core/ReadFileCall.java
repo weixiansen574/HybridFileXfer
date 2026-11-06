@@ -1,7 +1,6 @@
 package top.weixiansen574.hybridfilexfer.core;
 
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -68,45 +67,51 @@ public abstract class ReadFileCall implements Callable<Void> {
         }
     }
 
+    /**
+     * 只生成“块描述符”，不读取任何文件数据。
+     * <p>
+     * 真正的数据由 {@link SendFileCall} 通过 {@code FileChannel.transferTo} 零拷贝直接
+     * 从 page cache 送入 socket，因此这里既不占用缓冲池，也不产生用户态拷贝。
+     * <p>
+     * 顺带修掉了原实现里的两个问题：
+     * <ul>
+     *   <li>{@code channel.read()} 返回值未检查导致的死循环；</li>
+     *   <li>每个文件都要 open/close 一次只为拿 size。</li>
+     * </ul>
+     */
     private void readToDeque(RemoteFile file) throws Exception {
         fileIndex++;
+        String targetPath = localDir.generateTransferPath(file.getPath(), remoteDir);
         if (file.isDirectory()) {
-            deque.add(new FileBlock(false,
-                    fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
-                    file.lastModified(), 0, 0, null));
+            deque.add(new FileBlock(false, fileIndex, targetPath, file.lastModified(), 0, 0, null));
             return;
         }
-        //RandomAccessFile randomAccessFile = new RandomAccessFile(file, "r");
-        FileChannel channel = openFile(file.getPath());
-        long length = channel.size();
+        // 用实际打开后的 size，而不是 RemoteFile.getSize() 的列表快照：
+        // 若文件在列出列表之后被改动，快照会偏小，导致静默截断（接收端得到一个残缺但“看起来正常”的文件）。
+        long length;
+        SourceHandle probe = openSource(file.getPath());
+        try {
+            length = probe.channel().size();
+        } finally {
+            try {
+                probe.close();
+            } catch (Exception ignored) {
+            }
+        }
         long lastModified = file.lastModified();
-        long remaining = length;
-        if (length == 0){
-            ByteBuffer buffer = buffers.take();
-            buffer.clear();
-            buffer.limit(0);
-            deque.add(new FileBlock(true,
-                    fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
-                    lastModified, length, 0, buffer));
-            closeFile();
+        if (length <= 0) {
+            // 空文件也要发一个 length=0 的块，否则接收端不会创建该文件
+            deque.add(new FileBlock(fileIndex, targetPath, file.getPath(), lastModified, 0, 0, 0));
             return;
         }
         int i = 0;
-        while (remaining > 0){
-            int blkSize = (int) Math.min(remaining,FileBlock.BLOCK_SIZE);
-            ByteBuffer buffer = buffers.take();
-            buffer.clear();
-            buffer.limit(blkSize);
-            while (buffer.hasRemaining()) {
-                channel.read(buffer);
-            }
-            deque.add(new FileBlock(true,
-                    fileIndex, localDir.generateTransferPath(file.getPath(), remoteDir),
-                    lastModified, length, i, buffer));
+        long remaining = length;
+        while (remaining > 0) {
+            int blkSize = (int) Math.min(remaining, FileBlock.BLOCK_SIZE);
+            deque.add(new FileBlock(fileIndex, targetPath, file.getPath(), lastModified, length, i, blkSize));
             remaining -= blkSize;
             i++;
         }
-        closeFile();
     }
 
     public void recycleBuffer(ByteBuffer buffer) {
@@ -141,12 +146,14 @@ public abstract class ReadFileCall implements Callable<Void> {
         }
     }
 
+    /**
+     * 打开一个只读源句柄供 sendfile 使用。
+     * 句柄生命周期由 {@link SendFileCall} 管理（同一文件复用，换文件即关闭）。
+     */
+    public abstract SourceHandle openSource(String path) throws Exception;
+
     protected abstract boolean fileExists(String path) throws Exception;
 
     protected abstract List<RemoteFile> listFiles(String path) throws Exception;
-
-    protected abstract FileChannel openFile(String path) throws Exception;
-
-    protected abstract void closeFile() throws Exception;
 
 }

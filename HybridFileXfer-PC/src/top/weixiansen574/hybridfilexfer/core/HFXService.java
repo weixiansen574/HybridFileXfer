@@ -15,7 +15,52 @@ import top.weixiansen574.nio.DataByteChannel;
 
 public abstract class HFXService {
     public static final String CLIENT_HEADER = "HFXC";
-    public static final int VERSION_CODE = 300;
+    /**
+     * 302: 每个物理网卡开多条 TCP 连接（原来是一张网卡一条）。
+     * <p>
+     * 实测（同一台机、同一条 wlan0、裸 TCP 无应用层协议）：
+     * <pre>
+     *   1 条流  156.6 MB/s
+     *   2 条流  202.3 MB/s
+     *   4 条流  233.7 MB/s
+     *   8 条流  277.3 MB/s
+     * </pre>
+     * 单条 TCP 流受 cwnd 与空口调度限制，喂不满 WiFi 的多队列/A-MPDU 聚合能力，
+     * 一张网卡一条连接等于把链路潜力浪费掉三分之一以上。
+     * <p>
+     * 303: 连接数从"所有网卡同一个倍数"改为"逐张网卡下发"——WiFi 8 条、USB_ADB 1 条。
+     * 握手里的 int 由单值变成每张网卡一个，字节布局变了，故版本号必须同步。
+     * <p>
+     * 310: 3.1 版传输层优化——块大小 1MB→2MB、发送端改 sendfile 零拷贝、
+     * 块头 7 次 write 合并为 1 次。数据块布局与 303 一致，版本号随应用版本对齐。
+     */
+    public static final int VERSION_CODE = 310;
+
+    /**
+     * 每张网卡开几条 TCP 连接。握手时由客户端逐张网卡下发，服务端只照着 accept，
+     * 因此策略集中在客户端这一处，服务端不需要知道网卡类型。
+     * <p>
+     * WiFi 上单流受 cwnd 和空口调度限制，加流有效，但存在拐点：
+     * 实测（下行、裸 TCP）1/2/4/8 流 = 156/202/233/277 MB/s。
+     * 而手机发送方向（上行）实测 6 流与 8 流总数同为 255~259，加流已无收益，
+     * 反而多占 CPU 和空口竞争，故取 6。
+     * <p>
+     * USB_ADB 走 adb forward 隧道（手机侧是 USB 2.0，40MB/s 封顶），单流 35.5、
+     * 6 流 40.8，已经贴着物理上限，取 2 条即可吃满，再多只是白养隧道线程。
+     */
+    private static final int CONNECTIONS_WIFI = 6;
+    private static final int CONNECTIONS_USB_ADB = 2;
+    private static final int CONNECTIONS_FALLBACK = 4;
+
+    public static int connectionsFor(String iName) {
+        if (iName.startsWith("USB_ADB")) {
+            return CONNECTIONS_USB_ADB;
+        }
+        if (iName.startsWith("wlan") || iName.startsWith("ap") || iName.startsWith("eth")) {
+            return CONNECTIONS_WIFI;
+        }
+        return CONNECTIONS_FALLBACK;
+    }
     protected final LinkedBlockingDeque<ByteBuffer> buffers = new LinkedBlockingDeque<>();
     protected DataByteChannel ctChannel;
     protected List<TransferConnection> connections;

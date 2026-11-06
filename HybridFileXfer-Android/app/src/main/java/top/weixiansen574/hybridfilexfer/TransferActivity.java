@@ -344,7 +344,7 @@ public class TransferActivity extends AppCompatActivity {
 
         @Override
         public void onFileUploading(String iName, String path, long targetSize, long totalSize) {
-            transferDialog.showEvent(iName, String.format("▲ [%s/%s] %s",
+            transferDialog.showProgress(iName, String.format("▲ [%s/%s] %s",
                     Utils.formatFileSize(targetSize),
                     Utils.formatFileSize(totalSize),
                     path));
@@ -352,7 +352,7 @@ public class TransferActivity extends AppCompatActivity {
 
         @Override
         public void onFileDownloading(String iName, String path, long targetSize, long totalSize) {
-            transferDialog.showEvent(iName, String.format("▼ [%s/%s] %s",
+            transferDialog.showProgress(iName, String.format("▼ [%s/%s] %s",
                     Utils.formatFileSize(targetSize),
                     Utils.formatFileSize(totalSize),
                     path));

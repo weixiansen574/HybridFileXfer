@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.InetAddress;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -68,13 +69,32 @@ public class Main {
     };
 
     private static final ClientCallBack clientCallBack = new ClientCallBack() {
+        /**
+         * 按物理网卡累计字节数。单通道各打印一行看不出"某张网卡到底贡献了多少"，
+         * 尤其 USB_ADB 走的是 adb 隧道、不经过以太网卡，网卡监控里根本看不到它，
+         * 只能靠这里汇总对账。
+         */
+        private final Map<String, Long> ifaceBytes = new LinkedHashMap<>();
+
+        /** 去掉 "#2" 这类分连接后缀，还原成物理网卡名 */
+        private String interfaceOf(String iName) {
+            int i = iName.indexOf('#');
+            return i < 0 ? iName : iName.substring(0, i);
+        }
+
         @Override
         public void onReceiving() {
+            synchronized (ifaceBytes) {
+                ifaceBytes.clear();
+            }
             Strings.printf("receiving_files");
         }
 
         @Override
         public void onSending() {
+            synchronized (ifaceBytes) {
+                ifaceBytes.clear();
+            }
             Strings.printf("sending_files");
         }
 
@@ -95,12 +115,26 @@ public class Main {
 
         @Override
         public void onSpeedInfo(List<TrafficInfo> trafficInfoList) {
-
+            //每秒打印一次各通道速率。多通道聚合时，"总速度上不去"到底是某条通道被链路限死，
+            //还是所有通道都没跑满，靠这一行就能直接看出来。
+            StringBuilder sb = new StringBuilder("[实时] ");
+            for (TrafficInfo info : trafficInfoList) {
+                sb.append(info.iName)
+                        .append(" ▲").append(Utils.formatSpeed(info.uploadTraffic))
+                        .append(" ▼").append(Utils.formatSpeed(info.downloadTraffic))
+                        .append("   ");
+            }
+            System.out.println(sb);
         }
 
         @Override
         public void onChannelComplete(String iName, long traffic, long time) {
             Strings.printf("channel_complete", iName, time == 0 ? "∞" : Utils.formatSpeed(traffic / time * 1000));
+            String iface = interfaceOf(iName);
+            synchronized (ifaceBytes) {
+                Long old = ifaceBytes.get(iface);
+                ifaceBytes.put(iface, (old == null ? 0 : old) + traffic);
+            }
         }
 
         @Override
@@ -131,6 +165,28 @@ public class Main {
             Strings.printf("file_write_error", message);
         }
 
+        /**
+         * 传输结束后按物理网卡汇总一行。用法：
+         * 拿这一行和网卡监控对比 —— 某张网卡"应用侧算出来的"明显低于监控值，
+         * 说明它的连接没被喂饱；监控里完全没有的（USB_ADB），只能看这一行。
+         */
+        private void printIfaceSummary(long timeMs) {
+            if (timeMs <= 0) return;
+            StringBuilder sb = new StringBuilder("[网卡汇总] ");
+            long total = 0;
+            synchronized (ifaceBytes) {
+                for (Map.Entry<String, Long> e : ifaceBytes.entrySet()) {
+                    long bytes = e.getValue();
+                    total += bytes;
+                    sb.append(e.getKey())
+                            .append(' ').append(Utils.formatSpeed(bytes / timeMs * 1000))
+                            .append(" (").append(Utils.formatFileSize(bytes)).append(")   ");
+                }
+                ifaceBytes.clear();
+            }
+            System.out.println(sb.append("| 合计 ").append(Utils.formatSpeed(total / timeMs * 1000)));
+        }
+
         @Override
         public void onComplete(boolean isUpload, long traffic, long time) {
             if (isUpload) {
@@ -138,6 +194,7 @@ public class Main {
             } else {
                 Strings.printf("download_complete", Utils.formatSpeed(traffic / time * 1000), Utils.formatTime(time), Utils.formatFileSize(traffic));
             }
+            printIfaceSummary(time);
         }
 
         @Override
